@@ -1,0 +1,163 @@
+{
+ "meters": [
+  {
+   "key": "gas",
+   "name": "Gas",
+   "unit": "m³",
+   "outUnit": "kWh",
+   "ids": [],
+   "color": "gas",
+   "active": true,
+   "inTotal": true,
+   "decimals": 3,
+   "weather": true,
+   "factors": {
+    "zz": 0.9683,
+    "bw": 11.435
+   },
+   "prices": [
+    {
+     "from": "2016-01-01",
+     "price": 0.0502
+    },
+    {
+     "from": "2022-11-06",
+     "price": 0.08
+    },
+    {
+     "from": "2024-06-01",
+     "price": 0.1152
+    }
+   ],
+   "hint": "Gaszähler mit Rollenzählwerk: schwarze Ziffern sind m³, rote Ziffern die Nachkommastellen."
+  },
+  {
+   "key": "s180",
+   "name": "Strom Bezug",
+   "unit": "kWh",
+   "ids": [],
+   "obis": "1.8.0",
+   "color": "s180",
+   "active": true,
+   "inTotal": true,
+   "decimals": 0,
+   "prices": [
+    {
+     "from": "2008-01-01",
+     "price": 0.3
+    }
+   ],
+   "hint": "Digitaler Stromzähler, Register 1.8.0, also der Bezug aus dem Netz. Eigene Seriennummer bei „Seriennummern“ eintragen."
+  },
+  {
+   "key": "s280",
+   "name": "Strom Einspeisung",
+   "unit": "kWh",
+   "ids": [],
+   "obis": "2.8.0",
+   "color": "s280",
+   "active": true,
+   "inTotal": false,
+   "decimals": 0,
+   "prices": [
+    {
+     "from": "2024-01-01",
+     "price": 0
+    }
+   ],
+   "hint": "Derselbe digitale Stromzähler, Register 2.8.0, also die Einspeisung ins Netz."
+  },
+  {
+   "key": "frv",
+   "name": "Fronius Verbrauch",
+   "unit": "kWh",
+   "ids": [],
+   "color": "frv",
+   "active": true,
+   "inTotal": false,
+   "decimals": 2,
+   "prices": [
+    {
+     "from": "2024-01-01",
+     "price": 0.3
+    }
+   ],
+   "hint": "Wechselrichter oder dessen App: Gesamtverbrauch des Hauses in kWh. Läuft parallel zum Stromzähler des Versorgers.",
+   "controlOf": "s180",
+   "tolerance": 1,
+   "tolPerDay": 0.05
+  },
+  {
+   "key": "fre",
+   "name": "Fronius Einspeisung",
+   "unit": "kWh",
+   "ids": [],
+   "color": "fre",
+   "active": true,
+   "inTotal": false,
+   "decimals": 2,
+   "prices": [
+    {
+     "from": "2024-01-01",
+     "price": 0
+    }
+   ],
+   "hint": "Wechselrichter oder dessen App: eingespeiste Energie in kWh. Läuft parallel zum Einspeiseregister des Versorgers.",
+   "controlOf": "s280",
+   "tolerance": 1,
+   "tolPerDay": 0.05
+  },
+  {
+   "key": "wasser",
+   "name": "Wasser",
+   "unit": "m³",
+   "ids": [],
+   "color": "wasser",
+   "active": true,
+   "inTotal": true,
+   "decimals": 3,
+   "prices": [
+    {
+     "from": "2012-01-01",
+     "price": 3.81
+    }
+   ],
+   "hint": "Wasserzähler: schwarze Ziffern sind m³, rote Ziffern oder Zeigerräder die Liter."
+  },
+  {
+   "key": "sauna",
+   "name": "Sauna",
+   "unit": "kWh",
+   "ids": [],
+   "color": "sauna",
+   "active": true,
+   "inTotal": false,
+   "decimals": 2,
+   "prices": [
+    {
+     "from": "2020-01-01",
+     "price": 0.3
+    }
+   ],
+   "hint": "Unterzähler im Schaltschrank, zählt kWh."
+  },
+  {
+   "key": "wallbox",
+   "name": "Wallbox",
+   "unit": "kWh",
+   "ids": [],
+   "color": "wallbox",
+   "active": true,
+   "inTotal": true,
+   "decimals": 0,
+   "prices": [
+    {
+     "from": "2022-05-01",
+     "price": 0.33
+    }
+   ],
+   "hint": "Stromzähler der Wallbox, zählt kWh. Eigene Seriennummer bei „Seriennummern“ eintragen."
+  }
+ ],
+ "location": null
+}

@@ -1,0 +1,13 @@
+services:
+  zaehlerbuch:
+    build: .
+    container_name: zaehlerbuch
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY}"
+      ZB_PASSWORD: "${ZB_PASSWORD}"
+      ZB_MODEL: "claude-opus-5"
+    volumes:
+      - ./data:/data

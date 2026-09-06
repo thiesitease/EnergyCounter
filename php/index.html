@@ -1,0 +1,1251 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2b5f8f">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Zählerbuch SB85</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f2f3f5; --surface:#ffffff; --surface-2:#f7f8fa; --line:#dfe2e8; --line-strong:#c4c9d3;
+  --ink:#171a1f; --ink-2:#565d6a; --ink-3:#8a919d;
+  --accent:#2b5f8f; --accent-ink:#ffffff; --accent-soft:#e3edf6;
+  --good:#0ca30c; --good-text:#006300; --warn:#fab219; --warn-text:#7a4f00; --crit:#d03b3b; --crit-text:#a52a2a;
+  --c-gas:#eb6834; --c-s180:#2a78d6; --c-s280:#4a3aa7; --c-frv:#eda100; --c-fre:#e87ba4; --c-wasser:#1baf7a; --c-sauna:#e34948; --c-wallbox:#008300;
+  --y1:#86b6ef; --y2:#5598e7; --y3:#2a78d6; --y4:#1c5cab; --y5:#104281;
+  --grid:#e1e0d9; --axis:#c3c2b7; --muted:#898781;
+  --shadow:0 1px 2px rgba(23,26,31,.06),0 4px 14px rgba(23,26,31,.06);
+  --font-ui:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-num:"JetBrains Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#121417; --surface:#1b1e23; --surface-2:#22262c; --line:#2e333b; --line-strong:#3d434d;
+    --ink:#f1f3f6; --ink-2:#aab1bd; --ink-3:#7b8290;
+    --accent:#7fb3e6; --accent-ink:#0e1a26; --accent-soft:#1f2f3f;
+    --good:#0ca30c; --good-text:#4fd24f; --warn:#fab219; --warn-text:#fbc75a; --crit:#d03b3b; --crit-text:#f08c8c;
+    --c-gas:#d95926; --c-s180:#3987e5; --c-s280:#9085e9; --c-frv:#c98500; --c-fre:#d55181; --c-wasser:#199e70; --c-sauna:#e66767; --c-wallbox:#008300;
+    --y1:#184f95; --y2:#256abf; --y3:#3987e5; --y4:#6da7ec; --y5:#9ec5f4;
+    --grid:#2c2c2a; --axis:#383835; --muted:#898781;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#121417; --surface:#1b1e23; --surface-2:#22262c; --line:#2e333b; --line-strong:#3d434d;
+  --ink:#f1f3f6; --ink-2:#aab1bd; --ink-3:#7b8290;
+  --accent:#7fb3e6; --accent-ink:#0e1a26; --accent-soft:#1f2f3f;
+  --good:#0ca30c; --good-text:#4fd24f; --warn:#fab219; --warn-text:#fbc75a; --crit:#d03b3b; --crit-text:#f08c8c;
+  --c-gas:#d95926; --c-s180:#3987e5; --c-s280:#9085e9; --c-frv:#c98500; --c-fre:#d55181; --c-wasser:#199e70; --c-sauna:#e66767; --c-wallbox:#008300;
+  --y1:#184f95; --y2:#256abf; --y3:#3987e5; --y4:#6da7ec; --y5:#9ec5f4;
+  --grid:#2c2c2a; --axis:#383835; --muted:#898781;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 var(--font-ui);}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{margin:0;text-wrap:balance;letter-spacing:-.01em}
+h2{font-size:17px;font-weight:600}
+h3{font-size:14px;font-weight:600}
+.num{font-family:var(--font-num);font-variant-numeric:tabular-nums}
+a{color:var(--accent)}
+[hidden]{display:none!important}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+header{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top)}
+.hwrap{max-width:820px;margin:0 auto;padding:10px 16px 0}
+.brand{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.brand h1{font-size:19px;font-weight:700}
+.brand .status{font-size:12px;color:var(--ink-3);white-space:nowrap}
+.ro{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:999px;
+  background:color-mix(in srgb,var(--warn) 30%,var(--surface));color:var(--warn-text);white-space:nowrap}
+.brand .status.ok::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--good);margin-right:6px;vertical-align:1px}
+.brand .status.bad::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--crit);margin-right:6px;vertical-align:1px}
+.tabs{display:flex;gap:2px;margin-top:8px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:0 0 auto;background:none;border:0;border-bottom:2px solid transparent;padding:8px 12px;color:var(--ink-2);font-weight:500;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tabs button:hover{color:var(--ink)}
+
+main{max-width:820px;margin:0 auto;padding:16px 16px 72px}
+.stack{display:flex;flex-direction:column;gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.row.between{justify-content:space-between}
+.grow{flex:1 1 auto}
+.muted{color:var(--ink-2)}
+.small{font-size:12.5px}
+.tiny{font-size:11.5px;color:var(--ink-3)}
+.label{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:600}
+.banner{padding:10px 12px;border-radius:8px;background:var(--accent-soft);color:var(--ink);font-size:13.5px}
+.banner.warn{background:color-mix(in srgb,var(--warn) 18%,var(--surface));}
+.banner.crit{background:color-mix(in srgb,var(--crit) 14%,var(--surface));}
+.dot{display:inline-block;width:10px;height:10px;border-radius:3px;vertical-align:-1px;margin-right:6px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line-strong);background:var(--surface);border-radius:8px;padding:8px 14px;font-weight:600;cursor:pointer;min-height:38px;text-decoration:none;color:var(--ink)}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.danger{color:var(--crit-text);border-color:var(--crit)}
+.btn.sm{padding:5px 10px;min-height:30px;font-size:13px;font-weight:500}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.big{width:100%;min-height:48px;font-size:16px}
+input[type=text],input[type=number],input[type=date],input[type=datetime-local],input[type=password],select,textarea{
+  background:var(--surface);border:1px solid var(--line-strong);border-radius:8px;padding:8px 10px;min-height:38px;width:100%}
+input[inputmode=decimal]{font-family:var(--font-num);font-size:17px;letter-spacing:.02em}
+.field{display:flex;flex-direction:column;gap:4px}
+.field>span{font-size:12.5px;color:var(--ink-2)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line-strong);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer;font-weight:500}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.chip:hover{border-color:var(--ink-2)}
+.toggle{display:inline-flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;user-select:none}
+.toggle input{width:16px;height:16px;margin:0}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:10px;font-weight:500;box-shadow:var(--shadow);z-index:50;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw}
+.toast.show{opacity:1}
+
+.photostrip{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.photo{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface-2);display:flex;flex-direction:column}
+.photo img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:#000}
+.photo .pbody{padding:8px;display:flex;flex-direction:column;gap:5px;font-size:12.5px}
+.photo .pstate{display:flex;align-items:center;gap:6px;font-weight:600}
+.spin{width:12px;height:12px;border:2px solid var(--line-strong);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.photo select{min-height:30px;padding:3px 6px;font-size:12.5px}
+.photo .del{align-self:flex-end}
+.mrow{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.3fr);gap:8px 12px;padding:12px 0;border-top:1px solid var(--line);align-items:start}
+.mrow:first-of-type{border-top:0;padding-top:0}
+.mrow .mname{font-weight:600;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.mrow .last{font-size:12px;color:var(--ink-3);margin-top:2px}
+.mrow .last b{font-family:var(--font-num);font-weight:500;color:var(--ink-2)}
+.mrow .extra{grid-column:1/-1;display:flex;flex-direction:column;gap:6px}
+.mrow .opts{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.warnline{font-size:12.5px;color:var(--warn-text);display:flex;gap:6px;align-items:flex-start}
+.warnline.crit{color:var(--crit-text)}
+.okline{font-size:12px;color:var(--ink-3)}
+.src{font-size:11px;padding:1px 7px;border-radius:999px;background:var(--accent-soft);color:var(--ink-2);font-weight:600}
+.src.lo{background:color-mix(in srgb,var(--warn) 25%,var(--surface));color:var(--warn-text)}
+@media (max-width:480px){.mrow{grid-template-columns:1fr}}
+
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.tile .tname{display:flex;align-items:center;gap:6px;font-weight:600;font-size:13.5px}
+.tile .big{font-family:var(--font-num);font-size:22px;font-weight:600;line-height:1.1;white-space:nowrap}
+.tile .big small{font-size:12px;font-weight:500;color:var(--ink-2);font-family:var(--font-ui);margin-left:3px}
+.tile .sub{font-size:12.5px;color:var(--ink-2);display:flex;flex-direction:column;gap:2px}
+.tile .sub b{font-weight:500;color:var(--ink);font-family:var(--font-num)}
+.delta{font-size:12px;font-weight:600;display:inline-flex;gap:3px;align-items:center}
+.delta.up{color:var(--crit-text)} .delta.down{color:var(--good-text)} .delta.flat{color:var(--ink-3)}
+.credit,.credit b{color:var(--good-text)}
+.total{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.total .tname,.total .sub,.total .big small{color:color-mix(in srgb,var(--bg) 75%,transparent)}
+.total .sub b{color:var(--bg)}
+.chartbox{position:relative}
+.chartbox svg{width:100%;height:auto;display:block;overflow:visible}
+.chartbox svg text{font-family:var(--font-ui);font-size:11px;fill:var(--muted)}
+.chartbox svg .ylab{font-family:var(--font-num)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-2)}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--sw);margin-right:5px;vertical-align:-1px}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--surface);font-size:12px;padding:6px 9px;border-radius:7px;white-space:nowrap;box-shadow:var(--shadow);z-index:5;display:none;transform:translate(-50%,calc(-100% - 10px))}
+.tip b{font-family:var(--font-num);font-weight:600}
+
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:7px 8px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);font-weight:600}
+th:first-child,td:first-child{text-align:left}
+td.n{font-family:var(--font-num);font-variant-numeric:tabular-nums}
+.bar{display:inline-block;height:6px;border-radius:3px;background:var(--sw);vertical-align:middle;margin-left:6px}
+.hist{display:flex;flex-direction:column}
+.hrow{display:grid;grid-template-columns:150px 1fr;gap:6px 12px;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer;align-items:start}
+.hrow:hover{background:var(--surface-2)}
+.hrow .hd{font-weight:600;font-size:13.5px}
+.hrow .hd small{display:block;color:var(--ink-3);font-weight:400;font-size:11.5px}
+.hrow .vals{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12.5px}
+.hrow .vals span{white-space:nowrap}
+.hrow .vals b{font-family:var(--font-num);font-weight:500}
+.hrow .vals .chgflag{color:var(--warn-text);font-weight:600}
+.hrow .note{grid-column:1/-1;font-size:12.5px;color:var(--ink-2);font-style:italic}
+.thumbs{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+.thumb{width:56px;height:42px;border-radius:6px;object-fit:cover;border:1px solid var(--line-strong);background:var(--surface-2);cursor:zoom-in;display:block}
+.thumb:hover{border-color:var(--accent)}
+.thumbwrap{position:relative;display:inline-block}
+.thumbwrap .cap{position:absolute;left:0;right:0;bottom:0;font-size:9px;line-height:1.3;text-align:center;background:rgba(0,0,0,.55);color:#fff;border-radius:0 0 5px 5px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.viewer{display:flex;flex-direction:column;gap:10px}
+.viewer img{width:100%;max-height:70vh;object-fit:contain;background:#000;border-radius:10px}
+.editphotos{display:flex;gap:8px;flex-wrap:wrap}
+.editphoto{position:relative}
+.editphoto img{width:88px;height:66px;object-fit:cover;border-radius:8px;border:1px solid var(--line-strong);cursor:zoom-in;display:block}
+.editphoto .x{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:1px solid var(--line-strong);background:var(--surface);cursor:pointer;font-size:12px;line-height:1;padding:0}
+@media (max-width:480px){.hrow{grid-template-columns:1fr}}
+
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:40;display:flex;align-items:flex-end;justify-content:center}
+.modal .box{background:var(--surface);width:min(760px,100%);max-height:92vh;overflow:auto;border-radius:14px 14px 0 0;padding:16px}
+@media (min-width:640px){.modal{align-items:center}.modal .box{border-radius:14px}}
+
+.mcard{display:flex;flex-direction:column;gap:10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media (max-width:520px){.grid3{grid-template-columns:1fr 1fr}}
+.prices{display:flex;flex-direction:column;gap:6px}
+.prow{display:grid;grid-template-columns:minmax(110px,1.1fr) auto minmax(84px,1fr) auto;gap:6px;align-items:center}
+.prow input{min-height:34px}
+.sign{min-width:42px;min-height:34px;border:1px solid var(--line-strong);background:var(--surface);border-radius:8px;
+  font-size:19px;font-weight:700;line-height:1;cursor:pointer;font-family:var(--font-num);padding:0}
+.sign:hover{border-color:var(--ink-2)}
+.sign.neg{background:var(--good-text);border-color:var(--good-text);color:var(--surface)}
+.prow input[data-pp]{font-size:15px}
+@media (max-width:560px){
+  /* auf dem Handy bekommt das Datum eine eigene Zeile, damit Vorzeichen und Betrag Platz haben */
+  .prow{grid-template-columns:auto minmax(0,1fr) auto}
+  .prow input[type=date]{grid-column:1/-1}
+}
+.periods{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:560px){.periods{grid-template-columns:1fr}}
+.pbox{border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.pbox .ph{display:flex;align-items:center;gap:8px;font-weight:600}
+.pbox .ph i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.pA{--pc:var(--y3)} .pB{--pc:var(--muted)}
+.empty{padding:28px 12px;text-align:center;color:var(--ink-3)}
+.geo{display:flex;flex-direction:column;gap:4px}
+.geo button{text-align:left;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;cursor:pointer}
+.geo button:hover{border-color:var(--accent)}
+.kv{display:grid;grid-template-columns:auto 1fr 1fr 1fr;gap:4px 14px;font-size:13.5px;align-items:baseline}
+.kv .k{color:var(--ink-2)}
+.kv .n{font-family:var(--font-num);text-align:right}
+.kv .h{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);font-weight:600;text-align:right}
+</style>
+</head>
+<body>
+<header>
+  <div class="hwrap">
+    <div class="brand">
+      <h1>Zählerbuch SB85</h1>
+      <span class="row" style="gap:8px"><span class="ro" id="rolebadge" hidden>nur Lesen</span><span class="status" id="status">verbinde…</span></span>
+    </div>
+    <div class="tabs" role="tablist" id="tabs">
+      <button role="tab" data-tab="capture" aria-selected="true">Erfassen</button>
+      <button role="tab" data-tab="dash" aria-selected="false">Auswertung</button>
+      <button role="tab" data-tab="compare" aria-selected="false">Vergleich</button>
+      <button role="tab" data-tab="history" aria-selected="false">Verlauf</button>
+      <button role="tab" data-tab="meters" aria-selected="false">Zähler</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section id="tab-capture" class="stack"></section>
+  <section id="tab-dash" class="stack" hidden></section>
+  <section id="tab-compare" class="stack" hidden></section>
+  <section id="tab-history" class="stack" hidden></section>
+  <section id="tab-meters" class="stack" hidden></section>
+</main>
+<div class="modal" id="modal" hidden><div class="box" id="modalbox"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+const DAY = 86400000;
+const $ = (s, el=document) => el.querySelector(s);
+const $$ = (s, el=document) => Array.from(el.querySelectorAll(s));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nf = {};
+function fmt(n, d=1){ if(n==null||!isFinite(n)) return '–'; const k='d'+d; nf[k] ??= new Intl.NumberFormat('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d}); return nf[k].format(n); }
+function fmtEur(n, d=2){ return n==null||!isFinite(n) ? '–' : fmt(n,d)+' €'; }
+function fmtT(n){ return n==null||!isFinite(n) ? '–' : fmt(n,1)+' °C'; }
+function parseNum(s){ if(s==null) return null; s=String(s).trim().replace(/\s/g,''); if(!s) return null; if(s.includes(',')) s=s.replace(/\./g,'').replace(',','.'); const n=Number(s); return isFinite(n)?n:null; }
+function fmtDate(t){ return new Date(t).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'}); }
+function fmtDateTime(t){ return new Date(t).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+function fmtDateShort(t){ return new Date(t).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'}); }
+function toLocalInput(t){ const d=new Date(t); const p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; }
+function toDateInput(t){ return toLocalInput(t).slice(0,10); }
+function isoDay(d){ const p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; }
+function fromDateInput(s, endOfDay){ if(!s) return null; const [y,m,d]=s.split('-').map(Number); const dt=new Date(y,m-1,d, endOfDay?23:0, endOfDay?59:0, endOfDay?59:0); return dt.getTime(); }
+const MONTHS = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+const MONTHS_LONG = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+let toastTimer; function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2800); }
+
+/* ---------- Standard-Zähler (falls der Server noch keine Konfiguration hat) ---------- */
+const DEFAULT_METERS = [
+  {key:'gas', name:'Gas', unit:'m³', outUnit:'kWh', ids:[], color:'gas', active:true, inTotal:true, decimals:3, weather:true, factors:{zz:0.9683, bw:11.435}, prices:[{from:'2024-06-01',price:0.1152}], hint:'Gaszähler, Rollenzählwerk: schwarze Ziffern = m³, rote Ziffern = Nachkommastellen.'},
+  {key:'s180', name:'Strom Bezug', unit:'kWh', ids:[], obis:'1.8.0', color:'s180', active:true, inTotal:true, decimals:0, prices:[{from:'2008-01-01',price:0.30}], hint:'Digitaler Stromzähler, Register 1.8.0 (Bezug).'},
+  {key:'s280', name:'Strom Einspeisung', unit:'kWh', ids:[], obis:'2.8.0', color:'s280', active:true, inTotal:false, decimals:0, prices:[{from:'2024-01-01',price:0}], hint:'Digitaler Stromzähler, Register 2.8.0 (Einspeisung).'},
+  {key:'wasser', name:'Wasser', unit:'m³', ids:[], color:'wasser', active:true, inTotal:true, decimals:3, prices:[{from:'2012-01-01',price:3.81}], hint:'Wasserzähler: schwarze Ziffern = m³, rote = Liter.'},
+];
+
+/* ---------- Zustand ---------- */
+const state = {
+  tab:'capture', readings:[], cfg:null, weather:{daily:{}, name:'', updated:null, refreshing:false}, features:{photo:false, model:''}, online:false,
+  photos:[], form:{t:Date.now(), v:{}, chg:{}, notes:{}, src:{}, tManual:false, tFromPhoto:false, tSpread:0}, openExtra:{},
+  range:30, chartMeter:'gas', yearsN:4, longRange:'3y',
+  cmp:{preset:'l30', a0:null, a1:null, b0:null, b1:null},
+  geoResults:[], geoDraft:null,
+};
+const cache = {series:{}};
+function invalidate(){ cache.series={}; }
+function meters(){ return (state.cfg?.meters || DEFAULT_METERS); }
+function activeMeters(){ return meters().filter(m=>m.active!==false); }
+function meterByKey(k){ return meters().find(m=>m.key===k); }
+/* Kontrollzähler laufen parallel zu einem Hauptzähler und dienen nur dem Abgleich.
+   Gerechnet wird immer mit dem Hauptzähler, also dem der Stadtwerke. */
+function isControl(m){ return !!(m && m.controlOf && meterByKey(m.controlOf)); }
+function mainMeters(){ return activeMeters().filter(m=>!isControl(m)); }
+function controlMeters(){ return activeMeters().filter(isControl); }
+function controlFor(key){ return activeMeters().find(m=>m.controlOf===key); }
+function toleranceFor(m, days){ return (Number(m.tolerance)||0) + (Number(m.tolPerDay)||0)*(days||0); }
+function tolText(m){ const pd=Number(m.tolPerDay)||0; return `${fmt(Number(m.tolerance)||0,1)} kWh${pd?` plus ${fmt(pd,2)} kWh je Tag`:''}`; }
+function factorOf(m){ return m.factors ? (Number(m.factors.zz)||1)*(Number(m.factors.bw)||1) : 1; }
+function outUnit(m){ return m.outUnit || m.unit; }
+function colorVar(m){ return `var(--c-${m.color||m.key})`; }
+function hasLocation(){ return !!(state.cfg?.location?.lat && state.cfg?.location?.lon); }
+/* Zwei Passwörter: eines zum Bearbeiten, eines nur zum Ansehen. Der Server
+   entscheidet, die Oberfläche richtet sich danach. */
+function canEdit(){ return state.features.canEdit !== false; }
+function applyRole(){
+  const ro=!canEdit();
+  const capTab=$('#tabs button[data-tab="capture"]');
+  if(capTab) capTab.hidden=ro;
+  $('#rolebadge').hidden=!ro;
+  if(ro && state.tab==='capture') switchTab('dash');
+}
+function hasWeather(){ return Object.keys(state.weather.daily).length>0; }
+
+/* ---------- Server-Anbindung ----------
+   Ein Einstiegspunkt api.php?p=<aktion>, nur GET und POST, Anmeldung über ein
+   HttpOnly-Cookie, das der Server beim Login setzt. */
+const API='api.php?p=';
+async function api(method, action, body){
+  const headers={'Accept':'application/json'}; if(body!==undefined) headers['Content-Type']='application/json';
+  const r=await fetch(API+action,{method, headers, credentials:'same-origin', body: body===undefined?undefined:JSON.stringify(body)});
+  let data=null; try{ data=await r.json(); }catch{}
+  if(r.status===401){ askPassword(data?.message); throw {code:'unauthorized', message:data?.message||'Anmeldung nötig'}; }
+  if(!r.ok) throw {code:data?.error||'http_'+r.status, message:data?.message||('HTTP '+r.status), text:data?.text};
+  return data;
+}
+async function loadState(){
+  try{
+    const s=await api('GET','state');
+    state.readings=(s.readings||[]).sort((a,b)=>a.t-b.t); state.cfg=s.config&&s.config.meters?s.config:null; state.features=s.features||{};
+    state.weather={daily:s.weather?.daily||{}, name:s.weather?.name||'', updated:s.weather?.updated||null, refreshing:false};
+    state.online=true; invalidate(); setStatus(); renderAll(); applyRole();
+    if(s.weather?.stale && canEdit()) refreshWeather(false);
+  }catch(e){ state.online=false; setStatus(e.code==='unauthorized'?'Anmeldung nötig':'Server nicht erreichbar'); }
+}
+/* Wetter blockweise nachladen: jeder Aufruf holt genau einen Zeitraum und kehrt
+   zurück, damit kein Request lange läuft und nichts im Hintergrund arbeitet. */
+let wxBusy=false;
+async function refreshWeather(loud){
+  if(wxBusy) return; wxBusy=true; state.weather.refreshing=true;
+  if(loud) toast('Wetterdaten werden geladen…');
+  try{
+    for(let i=0;i<40;i++){
+      const step=await api('POST','weather-step');
+      if(step.weather){ state.weather={daily:step.weather.daily||{}, name:step.weather.name||'', updated:step.weather.updated, refreshing:true}; invalidate(); }
+      if(state.tab==='dash') renderDash(); else if(state.tab==='compare') renderCompare(); else if(state.tab==='meters') renderMeters();
+      if(step.error){ toast('Wetter: '+step.error); break; }
+      if(step.done) break;
+    }
+    if(loud) toast('Wetterdaten aktuell');
+  }catch(e){ if(loud) toast('Wetter fehlgeschlagen: '+(e.message||e.code)); }
+  finally{ wxBusy=false; state.weather.refreshing=false; renderDash(); renderCompare(); renderMeters(); }
+}
+const store = {
+  async saveReading(id, doc){ await api('POST','save-reading', Object.assign({id}, doc)); await loadState(); },
+  async deleteReading(id){ await api('POST','delete-reading', {id}); await loadState(); },
+  async saveConfig(cfg){ await api('POST','save-config', cfg); await loadState(); },
+};
+function setStatus(msg){
+  const el=$('#status');
+  if(msg){ el.textContent=msg; el.className='status bad'; return; }
+  el.textContent=`${state.readings.length} Ablesungen`; el.className='status ok';
+}
+function askPassword(msg){
+  if($('#pwbox')) return;
+  const box=$('#modalbox');
+  box.innerHTML=`<div class="stack" id="pwbox"><h2>Anmelden</h2><div class="small muted">${esc(msg||'Diese Seite ist mit einem Passwort geschützt.')} Mit dem Lesepasswort sind alle Auswertungen sichtbar, Änderungen aber gesperrt.</div>
+    <input type="password" id="pwin" placeholder="Passwort" autocomplete="current-password">
+    <div class="row between"><span class="tiny" id="pwerr"></span><button class="btn primary" id="pwok">Anmelden</button></div></div>`;
+  $('#modal').hidden=false; $('#pwin').focus();
+  const go=async()=>{
+    const p=$('#pwin').value; $('#pwerr').textContent='';
+    try{
+      const r=await fetch(API+'login',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({password:p})});
+      if(r.ok){ closeModal(); loadState(); }
+      else { let d=null; try{ d=await r.json(); }catch{} $('#pwerr').textContent=d?.message||'Passwort falsch'; }
+    }catch{ $('#pwerr').textContent='Server nicht erreichbar'; }
+  };
+  $('#pwok').onclick=go; $('#pwin').addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key==='NumpadEnter'||e.keyCode===13) go(); });
+}
+
+/* ---------- Reihen & Analyse ---------- */
+function series(key){
+  const c=cache.series[key]; if(c) return c;
+  const m=meterByKey(key); if(!m) return [];
+  const f=factorOf(m);
+  const pts=[]; let addon=0, prevRaw=null;
+  for(const r of state.readings){
+    const raw=r.v?.[key]; if(typeof raw!=='number') continue;
+    const chg=!!r.chg?.[key];
+    if(chg && prevRaw!=null) addon=prevRaw;
+    const cumRaw=raw+addon;
+    pts.push({t:r.t, raw, cumRaw, cum:cumRaw*f, chg, note:r.n?.[key]||'', id:r.id});
+    prevRaw=cumRaw;
+  }
+  for(let i=1;i<pts.length;i++){ const a=pts[i-1], b=pts[i]; b.days=(b.t-a.t)/DAY; b.amount=b.cum-a.cum; b.rate=b.days>0.02 ? b.amount/b.days : null; }
+  cache.series[key]=pts; return pts;
+}
+function cumAt(pts, t){
+  if(!pts.length) return null;
+  if(t<=pts[0].t) return t===pts[0].t?pts[0].cum:null;
+  if(t>=pts[pts.length-1].t) return t===pts[pts.length-1].t?pts[pts.length-1].cum:null;
+  let lo=0, hi=pts.length-1;
+  while(hi-lo>1){ const mid=(lo+hi)>>1; if(pts[mid].t<=t) lo=mid; else hi=mid; }
+  const a=pts[lo], b=pts[hi]; if(b.t===a.t) return b.cum;
+  return a.cum+(b.cum-a.cum)*(t-a.t)/(b.t-a.t);
+}
+function priceAt(m, t){
+  const ps=(m.prices||[]).map(p=>({t:fromDateInput(p.from)??0, price:Number(p.price)||0})).sort((a,b)=>a.t-b.t);
+  let p=0; for(const x of ps){ if(x.t<=t) p=x.price; else break; } return p;
+}
+function costBetween(m, a, b, amount){
+  if(amount==null||b<=a) return 0;
+  const ps=(m.prices||[]).map(p=>({t:fromDateInput(p.from)??0, price:Number(p.price)||0})).sort((x,y)=>x.t-y.t);
+  if(!ps.length) return 0;
+  let cost=0;
+  for(let i=0;i<ps.length;i++){ const s=Math.max(a, ps[i].t), e=Math.min(b, i+1<ps.length?ps[i+1].t:Infinity); if(e>s) cost+=amount*(e-s)/(b-a)*ps[i].price; }
+  return cost;
+}
+// Wetter: Mitteltemperatur und Gradtagzahl (20/15) über [a,b]
+function tempStats(a, b){
+  const daily=state.weather.daily; if(!Object.keys(daily).length||b<=a) return null;
+  const d=new Date(a); d.setHours(0,0,0,0); const end=new Date(b); end.setHours(0,0,0,0);
+  let sum=0,n=0,gtz=0,days=0;
+  for(; d<=end; d.setDate(d.getDate()+1)){ days++; const v=daily[isoDay(d)]; if(v==null) continue; sum+=v; n++; if(v<15) gtz+=20-v; }
+  if(!n||n<days*0.7) return null;
+  return {mean:sum/n, gtz, n};
+}
+function periodStats(key, a, b){
+  const m=meterByKey(key); const pts=series(key);
+  if(!pts.length||b<=a) return null;
+  const a1=Math.max(a, pts[0].t), b1=Math.min(b, pts[pts.length-1].t);
+  if(b1<=a1) return null;
+  const ca=cumAt(pts,a1), cb=cumAt(pts,b1); if(ca==null||cb==null) return null;
+  const days=(b1-a1)/DAY; if(days<0.5) return null;
+  const amount=cb-ca, rate=amount/days;
+  const cost=costBetween(m,a1,b1,amount);
+  const st={amount, days, rate, cost, costPerDay:cost/days, from:a1, to:b1, partial:(a1>a+DAY/2)||(b1<b-DAY/2)};
+  if(m.weather){ const ts=tempStats(a1,b1); if(ts){ st.temp=ts.mean; st.gtz=ts.gtz; st.perGtz=ts.gtz>5?amount/ts.gtz:null; } }
+  return st;
+}
+function monthlyRates(key, year){
+  const out=[];
+  for(let mo=0;mo<12;mo++){ const a=new Date(year,mo,1).getTime(), b=new Date(year,mo+1,1).getTime(); const s=periodStats(key,a,b); out.push(s && s.days>=3 ? s : null); }
+  return out;
+}
+function monthlyTemps(year){
+  const out=[]; for(let mo=0;mo<12;mo++){ const a=new Date(year,mo,1).getTime(), b=new Date(year,mo+1,1).getTime()-1; const ts=tempStats(a,b); out.push(ts?ts.mean:null); } return out;
+}
+
+/* ---------- Rendering ---------- */
+function renderAll(){ renderCapture(); renderDash(); renderCompare(); renderHistory(); renderMeters(); }
+function switchTab(tab){
+  state.tab=tab;
+  $$('#tabs button').forEach(b=>b.setAttribute('aria-selected', String(b.dataset.tab===tab)));
+  ['capture','dash','compare','history','meters'].forEach(t=>{ $('#tab-'+t).hidden = t!==tab; });
+  window.scrollTo({top:0});
+}
+$('#tabs').addEventListener('click', e=>{ const b=e.target.closest('button[data-tab]'); if(b) switchTab(b.dataset.tab); });
+document.addEventListener('click', e=>{ const a=e.target.closest('[data-goto]'); if(a){ e.preventDefault(); switchTab(a.dataset.goto); } });
+
+/* ===== Erfassen ===== */
+function lastPoint(key){ const p=series(key); return p.length?p[p.length-1]:null; }
+function typicalRate(key, t){ const s=periodStats(key, t-365*DAY, t); return s?s.rate:null; }
+/* letzte Ablesung, in der beide Zähler stehen – nur dann sind die Differenzen vergleichbar */
+function lastBoth(k1, k2){
+  for(let i=state.readings.length-1;i>=0;i--){ const r=state.readings[i];
+    if(typeof r.v?.[k1]==='number' && typeof r.v?.[k2]==='number') return r; }
+  return null;
+}
+/* Abgleich eines Kontrollzählers mit seinem Hauptzähler: der Verbrauch seit der
+   letzten gemeinsamen Ablesung muss auf beiden gleich sein. */
+function crossCheck(ctrlKey, values, t, chg){
+  const c=meterByKey(ctrlKey); if(!isControl(c)) return null;
+  const m=meterByKey(c.controlOf); if(!m) return null;
+  const vc=values[ctrlKey], vm=values[m.key];
+  if(vc==null||vm==null) return null;
+  if(chg && (chg[ctrlKey]||chg[m.key])) return null;
+  const base=lastBoth(ctrlKey, m.key); if(!base || t<=base.t) return null;
+  if(state.readings.some(r=>r.t>base.t && (r.chg?.[ctrlKey]||r.chg?.[m.key]))) return null;
+  const dc=(vc-base.v[ctrlKey])*factorOf(c);
+  const dm=(vm-base.v[m.key])*factorOf(m);
+  const days=(t-base.t)/DAY;
+  const tol=toleranceFor(c, days);
+  return {diff:dc-dm, tol, dc, dm, days, from:base.t, ok:Math.abs(dc-dm)<=tol, main:m, ctrl:c};
+}
+/* Plausibilität eines einzelnen Zählerstands. Wird sowohl für getippte Werte als
+   auch direkt nach der Foto-Erkennung benutzt.
+   crit = fast sicher falsch, warn = ungewöhnlich, ok = passt. */
+function plausibility(key, val, t, chg){
+  const m=meterByKey(key); if(!m||val==null) return null;
+  if(!isFinite(val)||val<0) return {lvl:'crit', msg:'keine gültige Zahl'};
+  const lp=lastPoint(key);
+  if(!lp) return {lvl:'ok', msg:'erster Stand für diesen Zähler'};
+  if(t<=lp.t) return {lvl:'crit', msg:`Zeitpunkt liegt vor der letzten Ablesung (${fmtDateTime(lp.t)})`};
+  if(chg) return {lvl:'ok', msg:`Zählerwechsel, wird nicht mit ${fmt(lp.raw,m.decimals)} verglichen`};
+  // Stelligkeit: der häufigste Fehler beim Ablesen ist ein verrutschtes Komma
+  const digNew=Math.floor(val).toString().length, digOld=Math.floor(lp.raw).toString().length;
+  if(lp.raw>=10 && digNew!==digOld)
+    return {lvl:'crit', msg:`${digNew} Stellen vor dem Komma statt ${digOld} wie zuletzt (${fmt(lp.raw,m.decimals)}) – Komma verrutscht oder Ziffer vergessen?`};
+  if(val<lp.raw) return {lvl:'crit', msg:`kleiner als der letzte Stand ${fmt(lp.raw,m.decimals)} – Zählerwechsel?`};
+  const days=(t-lp.t)/DAY;
+  if(days<=0.02) return {lvl:'ok', msg:''};
+  const rate=(val-lp.raw)*factorOf(m)/days;
+  const typ=typicalRate(key,lp.t);
+  const txt=`Ø ${fmt(rate, rate<10?2:1)} ${outUnit(m)}/Tag seit ${fmtDateShort(lp.t)}`;
+  if(typ!=null && typ>0){
+    if(rate>10*typ) return {lvl:'crit', msg:`${txt} – über das Zehnfache des üblichen Werts (${fmt(typ, typ<10?2:1)}), sehr wahrscheinlich falsch gelesen`};
+    if(rate>2.5*typ) return {lvl:'warn', msg:`${txt} – deutlich mehr als üblich (${fmt(typ, typ<10?2:1)})`};
+    if(rate<0.2*typ && val>lp.raw) return {lvl:'warn', msg:`${txt} – deutlich weniger als üblich (${fmt(typ, typ<10?2:1)})`};
+  }
+  return {lvl:'ok', msg:txt+' – plausibel'};
+}
+function checkValue(key, val, t, chg){
+  const p=plausibility(key, val, t, chg);
+  return p && p.msg ? [p] : [];
+}
+function renderCapture(){
+  const el=$('#tab-capture'); const f=state.form;
+  if(state.online && !canEdit()){
+    el.innerHTML=`<div class="card empty">Dieser Zugang darf nur ansehen. Zum Erfassen wird das Bearbeiten-Passwort gebraucht.</div>`;
+    return;
+  }
+  const canPhoto=!!state.features.photo;
+  const qi=queueInfo();
+  let html='';
+  html+=`<div class="card stack">
+    <div class="row between"><h2>Neue Ablesung</h2><span class="tiny">${state.readings.length?`letzte: ${fmtDateTime(state.readings[state.readings.length-1].t)}`:''}</span></div>
+    <div class="row">
+      <label class="field grow" style="max-width:300px"><span>Zeitpunkt${f.tFromPhoto?' <span class="src">aus dem Foto</span>':''}</span><input type="datetime-local" id="f-time" value="${toLocalInput(f.t)}"></label>
+      <div class="row" style="align-self:flex-end">
+        <label class="btn primary"><span>📷 Foto aufnehmen</span><input type="file" accept="image/*" capture="environment" hidden id="cam"></label>
+        <label class="btn"><span>Aus Galerie</span><input type="file" accept="image/*" multiple hidden id="gal"></label>
+      </div>
+    </div>
+    ${f.tFromPhoto&&f.tSpread>30*60000?`<div class="banner">Die Fotos wurden über ${fmt(f.tSpread/3600000,1)} Stunden hinweg aufgenommen. Übernommen ist der Zeitpunkt des ersten Fotos, ${fmtDateTime(f.t)}.</div>`:''}
+    ${state.online&&state.features.writable===false?`<div class="banner crit">Das Datenverzeichnis <code>data/</code> ist auf dem Server nicht beschreibbar. Rechte per FTP auf 0775 (oder 0777) setzen, sonst lässt sich nichts speichern.</div>`:''}
+    ${state.online&&!canPhoto?`<div class="banner warn">Foto-Erkennung ist auf dem Server nicht eingerichtet (API-Schlüssel fehlt in <code>config.php</code>). Fotos werden angezeigt, aber nicht gelesen – Stände bitte von Hand eintragen.</div>`:''}
+    ${state.photos.length?`${qi.total>1?`<div class="row between small"><span>${qi.total} Fotos${!canPhoto?' · werden archiviert':(qi.offen?` · ${qi.fertig} erkannt, ${qi.offen} in Arbeit`:' · alle erkannt')}</span>${qi.offen?'<span class="spin"></span>':''}</div>`:''}
+      <div class="photostrip" id="photos">${state.photos.map(photoCard).join('')}</div>`
+      :(canPhoto?`<div class="tiny">Ein Foto pro Zähler, gern alle auf einmal. Über „Aus Galerie“ lassen sich beliebig viele auswählen, die Erkennung arbeitet sie zu dritt parallel ab. Nah ran, Ziffern scharf und ohne Spiegelung. Jedes Foto wird zusammen mit der Ablesung archiviert.</div>`:'')}
+  </div>`;
+  html+=`<div class="card"><div class="row between" style="margin-bottom:8px"><h2>Zählerstände</h2><span class="tiny">Feld leer lassen, wenn nicht abgelesen</span></div>`;
+  for(const m of activeMeters()){
+    const lp=lastPoint(m.key); const val=f.v[m.key]; const src=f.src[m.key];
+    const checks = val!=null ? checkValue(m.key, val, f.t, !!f.chg[m.key]) : [];
+    const extraOpen = state.openExtra[m.key] || f.chg[m.key] || f.notes[m.key];
+    const ctrl = isControl(m) ? crossCheck(m.key, f.v, f.t, f.chg) : null;
+    if(ctrl){
+      if(ctrl.ok) checks.push({lvl:'ok', msg:`stimmt mit ${ctrl.main.name} überein, Abweichung ${fmt(ctrl.diff,2)} kWh auf ${fmt(ctrl.dm,0)} kWh`});
+      else checks.push({lvl:'warn', msg:`weicht von ${ctrl.main.name} ab: ${fmt(ctrl.dc,1)} statt ${fmt(ctrl.dm,1)} kWh seit ${fmtDateShort(ctrl.from)}, das sind ${fmt(ctrl.diff,2)} kWh bei erlaubten ${fmt(ctrl.tol,1)}`});
+    }
+    html+=`<div class="mrow" data-key="${m.key}">
+      <div>
+        <div class="mname"><span class="dot" style="background:${colorVar(m)}"></span>${esc(m.name)} <span class="tiny">${esc(m.unit)}</span>
+          ${isControl(m)?`<span class="src" title="Läuft parallel zu ${esc(meterByKey(m.controlOf).name)} und dient nur dem Abgleich">Kontrolle</span>`:''}
+          ${src?`<span class="src ${src.conf<0.7?'lo':''}" title="${esc(src.comment||'')}">Foto ${Math.round(src.conf*100)} %</span>`:''}</div>
+        <div class="last">${lp?`zuletzt <b>${fmt(lp.raw,m.decimals)}</b> am ${fmtDateShort(lp.t)}`:'noch kein Stand'}</div>
+      </div>
+      <div class="stack" style="gap:4px">
+        <input type="text" inputmode="decimal" placeholder="${lp?fmt(lp.raw,m.decimals):'Zählerstand'}" data-val="${m.key}" value="${val!=null?String(val).replace('.',','):''}" aria-label="${esc(m.name)} Zählerstand">
+        ${checks.map(c=>c.lvl==='ok'?`<div class="okline">${esc(c.msg)}</div>`:`<div class="warnline ${c.lvl}">⚠ ${esc(c.msg)}</div>`).join('')}
+        ${!extraOpen?`<button class="btn sm" data-more="${m.key}" style="align-self:flex-start">Zählerwechsel / Notiz…</button>`:''}
+      </div>
+      <div class="extra" ${extraOpen?'':'hidden'}>
+        <div class="opts"><label class="toggle"><input type="checkbox" data-chg="${m.key}" ${f.chg[m.key]?'checked':''}> Zählerwechsel (neuer Zähler beginnt mit diesem Stand)</label></div>
+        <input type="text" placeholder="Notiz (z. B. Urlaub, Heizung an, gemeldet …)" data-note="${m.key}" value="${esc(f.notes[m.key]||'')}">
+      </div>
+    </div>`;
+  }
+  const nVals=Object.values(f.v).filter(v=>v!=null).length;
+  const running=state.photos.some(p=>p.status==='running'||p.status==='queued');
+  html+=`<div style="margin-top:14px" class="stack">
+    <button class="btn primary big" id="save" ${nVals&&!running&&state.online?'':'disabled'}>${running?`Noch ${qi.offen} Foto${qi.offen>1?'s':''} in Arbeit…`:(nVals?`${nVals} Zählerstand${nVals>1?'e':''} speichern`:'Speichern')}</button>
+    ${nVals?`<button class="btn sm" id="clearform" style="align-self:center">Formular leeren</button>`:''}
+  </div></div>`;
+  el.innerHTML=html;
+  $('#f-time').addEventListener('change', e=>{ const t=new Date(e.target.value).getTime(); if(isFinite(t)){ f.t=t; f.tManual=true; f.tFromPhoto=false; renderCapture(); } });
+  $('#cam')?.addEventListener('change', e=>{ addPhotos(e.target.files); e.target.value=''; });
+  $('#gal')?.addEventListener('change', e=>{ addPhotos(e.target.files); e.target.value=''; });
+  $$('[data-val]',el).forEach(inp=>{
+    inp.addEventListener('change', ()=>{ const k=inp.dataset.val; const n=parseNum(inp.value); if(n==null) { delete f.v[k]; delete f.src[k]; } else { f.v[k]=n; if(f.src[k] && f.src[k].reading!==n) delete f.src[k]; } renderCapture(); });
+  });
+  $$('[data-more]',el).forEach(b=>b.addEventListener('click',()=>{ state.openExtra[b.dataset.more]=true; renderCapture(); }));
+  $$('[data-chg]',el).forEach(c=>c.addEventListener('change',()=>{ if(c.checked) f.chg[c.dataset.chg]=true; else delete f.chg[c.dataset.chg]; renderCapture(); }));
+  $$('[data-note]',el).forEach(i=>i.addEventListener('change',()=>{ const v=i.value.trim(); if(v) f.notes[i.dataset.note]=v; else delete f.notes[i.dataset.note]; }));
+  $$('[data-assign]',el).forEach(s=>s.addEventListener('change',()=>{ const p=state.photos.find(p=>p.id===s.dataset.assign); if(p){ p.assigned=s.value||null; applyPhoto(p, true); renderCapture(); } }));
+  $$('[data-delphoto]',el).forEach(b=>b.addEventListener('click',()=>{ const i=state.photos.findIndex(p=>p.id===b.dataset.delphoto); if(i>=0){ const p=state.photos[i]; URL.revokeObjectURL(p.url); const k=p.assigned||p.result?.meter; if(k && f.src[k]?.photo===p.id){ delete f.v[k]; delete f.src[k]; } state.photos.splice(i,1); if(!state.photos.length){ f.tFromPhoto=false; f.tSpread=0; } renderCapture(); applyPhotoTimes(); } }));
+  $$('[data-retry]',el).forEach(b=>b.addEventListener('click',()=>{ const p=state.photos.find(p=>p.id===b.dataset.retry); if(p&&!photoQueue.includes(p)){ p.status='queued'; photoQueue.push(p); renderCapture(); pumpQueue(); } }));
+  $('#save')?.addEventListener('click', saveForm);
+  $('#clearform')?.addEventListener('click', ()=>{ resetForm(); renderCapture(); });
+}
+function photoCard(p){
+  const m=p.assigned?meterByKey(p.assigned):(p.result?.meter?meterByKey(p.result.meter):null);
+  let st='';
+  if(p.status==='queued') st=`<div class="pstate muted">wartet…</div>`;
+  else if(p.status==='running') st=`<div class="pstate"><span class="spin"></span> erkenne…</div>`;
+  else if(p.status==='error') st=`<div class="pstate" style="color:var(--crit-text)">${esc(p.error||'Fehler')}</div><button class="btn sm" data-retry="${p.id}">Nochmal</button>`;
+  else if(p.status==='done'){
+    const r=p.result;
+    const pl = (m && r.reading!=null) ? plausibility(m.key, r.reading, state.form.t, !!state.form.chg[m.key]) : null;
+    const lowConf = r.confidence!=null && r.confidence<0.7;
+    st=`<div class="pstate">${m?`<span class="dot" style="background:${colorVar(m)}"></span>${esc(m.name)}`:'Zähler unbekannt'}</div>
+        <div>Stand: <b class="num">${r.reading!=null?fmt(r.reading, m?.decimals??3):'–'}</b> ${r.confidence!=null?`<span class="tiny${lowConf?' ':''}">(${Math.round(r.confidence*100)} % sicher)</span>`:''}</div>
+        ${r.id_text?`<div class="tiny">Nr. ${esc(r.id_text)}</div>`:''}
+        ${r.comment?`<div class="tiny">${esc(r.comment)}</div>`:''}
+        ${lowConf?`<div class="warnline">⚠ unsicher gelesen, bitte nachsehen</div>`:''}
+        ${pl&&pl.lvl!=='ok'?`<div class="warnline ${pl.lvl}">⚠ ${esc(pl.msg)}</div>`:(pl&&pl.msg?`<div class="okline">✓ ${esc(pl.msg)}</div>`:'')}`;
+  } else if(p.status==='stored') st=`<div class="pstate">Foto wird nur archiviert</div>`;
+  const abw = p.time && Math.abs(p.time-state.form.t)>15*60000
+    ? `<div class="tiny">aufgenommen ${fmtDateTime(p.time)}</div>` : '';
+  const sel=`<select data-assign="${p.id}" aria-label="Zähler zuordnen"><option value="">– Zähler zuordnen –</option>${activeMeters().map(x=>`<option value="${x.key}" ${(p.assigned||p.result?.meter)===x.key?'selected':''}>${esc(x.name)}</option>`).join('')}</select>`;
+  return `<div class="photo"><img src="${p.url}" alt=""><div class="pbody">${st}${abw}${(p.status==='done'||p.status==='stored')?sel:''}<button class="btn sm del" data-delphoto="${p.id}">Entfernen</button></div></div>`;
+}
+function resetForm(){ state.form={t:Date.now(), v:{}, chg:{}, notes:{}, src:{}, tManual:false, tFromPhoto:false, tSpread:0}; state.openExtra={}; state.photos.forEach(p=>URL.revokeObjectURL(p.url)); state.photos=[]; photoQueue.length=0; }
+async function saveForm(){
+  const f=state.form; const v={}, n={}, chg={};
+  for(const m of activeMeters()){ if(f.v[m.key]!=null) v[m.key]=f.v[m.key]; if(f.notes[m.key]) n[m.key]=f.notes[m.key]; if(f.chg[m.key]) chg[m.key]=true; }
+  if(!Object.keys(v).length) return;
+  const crit = Object.keys(v).flatMap(k=>checkValue(k, v[k], f.t, !!chg[k])).filter(c=>c.lvl==='crit');
+  if(crit.length && !confirm('Es gibt Warnungen:\n\n'+crit.map(c=>'• '+c.msg).join('\n')+'\n\nTrotzdem speichern?')) return;
+  const doc={t:f.t, v, src: Object.keys(f.src).length?'photo':'manual', created:Date.now()};
+  if(Object.keys(n).length) doc.n=n; if(Object.keys(chg).length) doc.chg=chg;
+  const id='r'+f.t.toString(36)+Math.random().toString(36).slice(2,6);
+  const btn=$('#save'); btn.disabled=true;
+  // Erst die Fotos ins Archiv, dann die Ablesung mit den Verweisen darauf.
+  const ph=[]; let failed=0; const total=state.photos.length;
+  for(let i=0;i<state.photos.length;i++){
+    const p=state.photos[i];
+    btn.textContent=`Foto ${i+1} von ${total} wird abgelegt…`;
+    try{
+      const small=await archiveImage(p);
+      const mk=p.assigned||p.result?.meter||'sonstige';
+      const r=await api('POST','save-photo',{id, meter:mk, image:small});
+      ph.push({f:r.file, m: mk==='sonstige'?'':mk});
+    }catch(e){ failed++; }
+  }
+  if(ph.length) doc.ph=ph;
+  btn.textContent='Speichere…';
+  try{
+    await store.saveReading(id, doc);
+    toast(failed?`Gespeichert, ${failed} Foto${failed>1?'s':''} ließ sich nicht ablegen`:(ph.length?`Ablesung und ${ph.length} Foto${ph.length>1?'s':''} gespeichert`:'Ablesung gespeichert'));
+    resetForm(); renderCapture();
+  }
+  catch(e){ toast('Speichern fehlgeschlagen: '+(e.message||e.code||e)); renderCapture(); }
+}
+
+/* Aufnahmezeitpunkt aus dem Foto lesen (EXIF, ohne Zusatzbibliothek).
+   Gesucht wird DateTimeOriginal, ersatzweise DateTimeDigitized oder DateTime.
+   Die Zeit im Foto ist Ortszeit der Kamera und wird genau so übernommen. */
+async function exifDateTime(file){
+  try{
+    const buf=await file.slice(0, 256*1024).arrayBuffer();
+    const dv=new DataView(buf);
+    if(dv.byteLength<20 || dv.getUint16(0)!==0xFFD8) return null;
+    const standalone=new Set([0xFFD8,0xFFD9,0xFF01,0xFFD0,0xFFD1,0xFFD2,0xFFD3,0xFFD4,0xFFD5,0xFFD6,0xFFD7]);
+    let off=2;
+    while(off+4<=dv.byteLength){
+      const marker=dv.getUint16(off);
+      if((marker&0xFF00)!==0xFF00) break;
+      if(standalone.has(marker)){ off+=2; continue; }
+      const size=dv.getUint16(off+2);
+      if(marker===0xFFDA) break;                       // ab hier kommen die Bilddaten
+      if(marker===0xFFE1 && off+10<dv.byteLength){
+        const start=off+4;
+        if(dv.getUint32(start)===0x45786966 && dv.getUint16(start+4)===0){
+          const tiff=start+6;
+          const le=dv.getUint16(tiff)===0x4949;
+          const g16=o=>dv.getUint16(o,le), g32=o=>dv.getUint32(o,le);
+          if(g16(tiff+2)!==42) return null;
+          const ascii=(o,len)=>{ let s=''; for(let i=0;i<len-1 && o+i<dv.byteLength;i++){ const c=dv.getUint8(o+i); if(!c) break; s+=String.fromCharCode(c); } return s; };
+          const walk=(ifd)=>{
+            const out={ptr:null, tags:{}};
+            if(ifd+2>dv.byteLength) return out;
+            const n=g16(ifd);
+            for(let i=0;i<n;i++){
+              const e=ifd+2+i*12; if(e+12>dv.byteLength) break;
+              const tag=g16(e), type=g16(e+2), cnt=g32(e+4);
+              if(tag===0x8769) out.ptr=tiff+g32(e+8);
+              if(type===2 && cnt>0 && cnt<64 && [0x0132,0x9003,0x9004].includes(tag)){
+                const vo=cnt>4 ? tiff+g32(e+8) : e+8;
+                out.tags[tag]=ascii(vo,cnt);
+              }
+            }
+            return out;
+          };
+          const ifd0=walk(tiff+g32(tiff+4));
+          const exif=ifd0.ptr?walk(ifd0.ptr):{tags:{}};
+          const raw=exif.tags[0x9003]||exif.tags[0x9004]||ifd0.tags[0x0132];
+          if(raw){
+            const m=raw.match(/^(\d{4})[:\-](\d\d)[:\-](\d\d)[ T](\d\d):(\d\d):(\d\d)/);
+            if(m){
+              const t=new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+m[6]).getTime();
+              if(isFinite(t)) return t;
+            }
+          }
+          return null;
+        }
+      }
+      off+=2+size;
+    }
+  }catch{}
+  return null;
+}
+/* plausibler Aufnahmezeitpunkt: EXIF, ersatzweise das Änderungsdatum der Datei */
+function sensibleTime(t){ return t && t>946684800000 && t<Date.now()+2*DAY ? t : null; }
+async function photoTime(p){
+  if('time' in p) return p.time;
+  p.time = sensibleTime(await exifDateTime(p.file)) ?? sensibleTime(p.file.lastModified) ?? null;
+  return p.time;
+}
+/* Zeitpunkt des Formulars aus den Fotos setzen, solange er nicht von Hand geändert wurde */
+async function applyPhotoTimes(){
+  const times=[];
+  for(const p of state.photos){ const t=await photoTime(p); if(t) times.push(t); }
+  if(!times.length){ renderCapture(); return; }
+  const first=Math.min(...times);
+  state.form.tSpread=Math.max(...times)-first;
+  if(!state.form.tManual){ state.form.t=first; state.form.tFromPhoto=true; }
+  renderCapture();
+}
+
+/* Foto-Erkennung über den Server, mit Warteschlange für viele Bilder auf einmal */
+const PHOTO_PARALLEL = 3;      // gleichzeitige Erkennungen, schont Server und Mobilfunk
+const photoQueue = [];
+let photoRunning = 0;
+async function fileToJpeg(file, max, quality){
+  let bmp=null; try{ bmp=await createImageBitmap(file,{imageOrientation:'from-image'}); }catch{ try{ bmp=await createImageBitmap(file); }catch{} }
+  if(!bmp) return new Promise(res=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.readAsDataURL(file); });
+  const s=Math.min(1, max/Math.max(bmp.width,bmp.height));
+  const c=document.createElement('canvas'); c.width=Math.max(1,Math.round(bmp.width*s)); c.height=Math.max(1,Math.round(bmp.height*s));
+  c.getContext('2d').drawImage(bmp,0,0,c.width,c.height); bmp.close?.();
+  return c.toDataURL('image/jpeg', quality);
+}
+/* großes Bild zum Lesen, kleineres fürs Archiv – spart Platz auf dem Webspace */
+async function readImage(p){ if(!p.big) p.big=await fileToJpeg(p.file,1600,0.88); return p.big; }
+async function archiveImage(p){ if(!p.small) p.small=await fileToJpeg(p.file,1200,0.72); return p.small; }
+function addPhotos(files){
+  const list=Array.from(files||[]);
+  if(!list.length) return;
+  for(const file of list){
+    const p={id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), file, url:URL.createObjectURL(file),
+             status: state.features.photo?'queued':'stored', result:null, assigned:null};
+    state.photos.push(p);
+    if(state.features.photo) photoQueue.push(p);
+  }
+  renderCapture(); pumpQueue(); applyPhotoTimes();
+}
+function pumpQueue(){
+  while(photoRunning<PHOTO_PARALLEL && photoQueue.length){
+    const p=photoQueue.shift();
+    if(!state.photos.includes(p)) continue;
+    photoRunning++;
+    recognize(p).finally(()=>{ photoRunning--; renderCapture(); pumpQueue(); });
+  }
+}
+function queueInfo(){
+  const total=state.photos.length;
+  const offen=state.photos.filter(p=>p.status==='queued'||p.status==='running').length;
+  return {total, offen, fertig:total-offen};
+}
+function buildPrompt(){
+  const lines=activeMeters().map(m=>{
+    const lp=lastPoint(m.key);
+    return `- key "${m.key}": ${m.name}. Unit: ${m.unit}. ${m.hint||''}${m.ids?.length?` Serial/ID text(s) on the meter: ${m.ids.join(', ')}.`:''}${m.obis?` OBIS register code shown on display: ${m.obis}.`:''}${lp?` Last known reading: ${lp.raw} ${m.unit} on ${fmtDate(lp.t)} (the new value should be slightly higher, unless the meter was replaced).`:''}`;
+  }).join('\n');
+  return `You are reading a photo of a utility meter in a private house in Germany. Identify which of the known meters it shows and read the counter value exactly.
+
+Known meters:
+${lines}
+
+Rules:
+- Read the digits carefully, left to right. Red digits, red-framed digits or digits after a comma/decimal point are decimals. Ignore rotating pointer dials unless they are the only decimals.
+- Return the reading as a plain decimal number in the meter's own unit (e.g. 07024,042 m³ -> 7024.042). Do not round, do not add or remove digits. Leading zeros are dropped.
+- Gas and water meters have mechanical roller counters; electricity meters have digital LCD displays that may alternate between registers. If an OBIS code like 1.8.0 or 2.8.0 is visible, use it to choose between "s180" (1.8.0, Bezug) and "s280" (2.8.0, Einspeisung).
+- If a serial number is visible, match it against the known IDs to pick the meter. If nothing matches, use "unknown".
+- Use the last known reading only as a plausibility check, never copy it. If the digits are hard to read, give your best reading, lower the confidence and explain in "comment" (German, short).`;
+}
+async function recognize(p){
+  p.status='running'; p.error=null; renderCapture();
+  try{
+    const img=await readImage(p);
+    const res=await api('POST','recognize',{image:img, media_type:'image/jpeg', prompt:buildPrompt()});
+    let meter = typeof res.meter==='string' && meterByKey(res.meter) ? res.meter : null;
+    const idText = res.id_text ? String(res.id_text) : '';
+    if(!meter && idText){ const norm=idText.replace(/\s/g,'').toUpperCase(); const hit=activeMeters().find(m=>(m.ids||[]).some(id=>norm.includes(String(id).toUpperCase()))); if(hit) meter=hit.key; }
+    const reading = typeof res.reading==='number' ? res.reading : parseNum(res.reading);
+    p.result={meter, id_text:idText, reading, confidence: typeof res.confidence==='number'?Math.max(0,Math.min(1,res.confidence)):null, comment: res.comment?String(res.comment):''};
+    p.status='done'; applyPhoto(p,false);
+  }catch(e){ p.status='error'; p.error=e?.message||e?.code||'Fehler'; }
+  renderCapture();
+}
+function applyPhoto(p, force){
+  const key=p.assigned||p.result?.meter; const r=p.result; const f=state.form;
+  if(!key||!r||r.reading==null) return;
+  for(const k of Object.keys(f.src)) if(f.src[k].photo===p.id && k!==key){ delete f.src[k]; delete f.v[k]; }
+  const cur=f.src[key];
+  if(force || f.v[key]==null || cur){ f.v[key]=r.reading; f.src[key]={photo:p.id, conf:r.confidence??0.5, comment:r.comment, reading:r.reading}; }
+}
+
+/* ===== Auswertung ===== */
+function deltaHtml(cur, prev, invert, label='Vorjahr'){
+  if(cur==null||prev==null||prev===0) return `<span class="delta flat">– ${label}</span>`;
+  const d=(cur-prev)/Math.abs(prev)*100; const up=d>2, down=d<-2;
+  const cls = !up&&!down ? 'flat' : ((up!==!!invert)?'up':'down');
+  return `<span class="delta ${cls}">${up?'▲':(down?'▼':'●')} ${fmt(Math.abs(d),0)} % ${up?'mehr':(down?'weniger':'wie')} ${label}</span>`;
+}
+function weatherBanner(){
+  if(!hasLocation()) return `<div class="banner">Für Außentemperaturen fehlt noch der Standort. <a href="#" data-goto="meters">Unter „Zähler“ festlegen</a> – danach werden die Tagesmittel von Open-Meteo geladen.</div>`;
+  if(!hasWeather()) return `<div class="banner">${state.weather.refreshing?'Wetterdaten werden geladen…':'Noch keine Wetterdaten. <a href="#" data-goto="meters">Unter „Zähler“ neu laden</a>.'}</div>`;
+  return '';
+}
+function renderDash(){
+  const el=$('#tab-dash');
+  if(!state.readings.length){ el.innerHTML=`<div class="card empty">${state.online?'Noch keine Ablesungen. Unter „Erfassen“ den ersten Stand eintragen.':'Keine Verbindung zum Server.'}</div>`; return; }
+  const now=Date.now(); const R=state.range; const b=now, a=now-R*DAY;
+  const ms=mainMeters();
+  let totalDay=0, totalPrevDay=0, anyTotal=false, anyPrev=false;
+  const tiles=ms.map(m=>{
+    const s=periodStats(m.key,a,b); const sp=periodStats(m.key,a-365*DAY,b-365*DAY);
+    if(s && m.inTotal){ totalDay+=s.costPerDay; anyTotal=true; if(sp){ totalPrevDay+=sp.costPerDay; anyPrev=true; } }
+    const ou=outUnit(m); const feed=/einspeis/i.test(m.name);
+    return `<div class="tile">
+      <div class="tname"><span class="dot" style="background:${colorVar(m)}"></span>${esc(m.name)}</div>
+      ${s?`<div class="big">${fmt(s.rate, s.rate<10?2:1)}<small>${esc(ou)}/Tag</small></div>
+      <div class="sub"><span><b>${fmt(s.amount, s.amount<100?1:0)}</b> ${esc(ou)} in ${fmt(s.days,0)} Tagen${s.partial?' (Daten bis '+fmtDateShort(s.to)+')':''}</span>
+      ${priceAt(m,b)!==0?`<span${s.cost<0?' class="credit"':''}><b>${fmtEur(s.costPerDay)}</b>/Tag · <b>${fmtEur(s.cost,0)}</b> ${s.cost<0?'Gutschrift':'gesamt'}</span>`:`<span class="tiny">kein Preis hinterlegt</span>`}
+      ${s.temp!=null?`<span>Ø <b>${fmtT(s.temp)}</b> außen${s.perGtz!=null?` · <b>${fmt(s.perGtz,2)}</b> ${esc(ou)}/Gradtag`:''}</span>`:''}</div>
+      ${deltaHtml(s.rate, sp?.rate, feed)}
+      ${s.perGtz!=null&&sp?.perGtz!=null?deltaHtml(s.perGtz, sp.perGtz, false, 'Vorjahr, witterungsbereinigt'):''}`
+      :`<div class="big" style="color:var(--ink-3)">–</div><div class="sub">keine Daten im Zeitraum</div>`}
+    </div>`;
+  });
+  const totalTile = anyTotal ? `<div class="tile total">
+      <div class="tname">Kosten gesamt (${ms.filter(m=>m.inTotal).map(m=>m.name).join(' + ')})</div>
+      <div class="big">${fmtEur(totalDay)}<small>/Tag</small></div>
+      <div class="sub"><span>≈ <b>${fmtEur(totalDay*30.44,0)}</b> pro Monat · <b>${fmtEur(totalDay*365,0)}</b> pro Jahr</span></div>
+      ${anyPrev?deltaHtml(totalDay,totalPrevDay):''}
+    </div>`:'';
+  const years=[...new Set(state.readings.map(r=>new Date(r.t).getFullYear()))].sort();
+  const cm=meterByKey(state.chartMeter)||ms[0];
+  el.innerHTML=`
+    <div class="card stack">
+      <div class="row between"><h2>Aktueller Verbrauch</h2>
+        <div class="chips" id="rangechips">${[[30,'30 Tage'],[90,'90 Tage'],[365,'12 Monate']].map(([d,l])=>`<button class="chip" aria-pressed="${R===d}" data-range="${d}">${l}</button>`).join('')}</div></div>
+      ${weatherBanner()}
+      <div class="tiny">Zeitraum ${fmtDate(a)} – ${fmtDate(b)}. Zwischen zwei Ablesungen wird linear interpoliert. Vorjahresvergleich: gleicher Zeitraum ein Jahr früher. Gradtage nach 20/15-Methode (Heiztag, wenn Tagesmittel unter 15 °C).</div>
+      <div class="tiles">${totalTile}${tiles.join('')}</div>
+    </div>
+    ${controlCard()}
+    <div class="card stack">
+      <div class="row between"><h2>Monatsverlauf nach Jahren</h2></div>
+      <div class="chips" id="meterchips">${ms.map(m=>`<button class="chip" aria-pressed="${m.key===cm.key}" data-meter="${m.key}"><span class="dot" style="background:${colorVar(m)}"></span>${esc(m.name)}</button>`).join('')}</div>
+      <div class="row between"><span class="small muted">Ø ${esc(outUnit(cm))} pro Tag je Kalendermonat.</span>
+        <div class="chips">${[3,4,5].map(n=>`<button class="chip" aria-pressed="${state.yearsN===n}" data-years="${n}">${n} Jahre</button>`).join('')}</div></div>
+      <div class="chartbox" id="chart-months"></div>
+      ${hasWeather()?`<div class="small muted" style="margin-top:6px">Ø Außentemperatur je Monat (gleiche Jahresfarben)</div><div class="chartbox" id="chart-temps"></div>`:''}
+    </div>
+    ${cm.weather?`<div class="card stack">
+      <div class="row between"><h2>${esc(cm.name)} gegen Außentemperatur</h2></div>
+      <div class="small muted">Jeder Punkt ist ein Abschnitt zwischen zwei Ablesungen (mindestens 3 Tage): Ø Außentemperatur gegen Ø ${esc(outUnit(cm))}/Tag. Liegen Punkte eines Jahres bei gleicher Temperatur höher, wurde mehr verbraucht als in anderen Jahren.</div>
+      <div class="chartbox" id="chart-scatter"></div>
+    </div>`:''}
+    <div class="card stack">
+      <div class="row between"><h2>Verbrauch zwischen den Ablesungen</h2>
+        <div class="chips">${[['1y','1 Jahr'],['3y','3 Jahre'],['all','alles']].map(([k,l])=>`<button class="chip" aria-pressed="${state.longRange===k}" data-long="${k}">${l}</button>`).join('')}</div></div>
+      <div class="small muted">${esc(cm.name)}: Ø ${esc(outUnit(cm))} pro Tag im Abschnitt zwischen zwei Ablesungen. Jeder Punkt markiert eine Ablesung.</div>
+      <div class="chartbox" id="chart-long"></div>
+    </div>`;
+  $$('[data-range]',el).forEach(b=>b.addEventListener('click',()=>{ state.range=Number(b.dataset.range); renderDash(); }));
+  $$('[data-meter]',el).forEach(b=>b.addEventListener('click',()=>{ state.chartMeter=b.dataset.meter; renderDash(); }));
+  $$('[data-years]',el).forEach(b=>b.addEventListener('click',()=>{ state.yearsN=Number(b.dataset.years); renderDash(); }));
+  $$('[data-long]',el).forEach(b=>b.addEventListener('click',()=>{ state.longRange=b.dataset.long; renderDash(); }));
+  const ys=years.slice(-state.yearsN);
+  drawMonthChart($('#chart-months'), cm, ys);
+  if($('#chart-temps')) drawTempChart($('#chart-temps'), ys);
+  if($('#chart-scatter')) drawScatter($('#chart-scatter'), cm);
+  drawLongChart($('#chart-long'), cm);
+}
+/* Abgleich: Verbrauch je Abschnitt auf Kontrollzähler und Hauptzähler */
+function controlSeries(c){
+  const m=meterByKey(c.controlOf); if(!m) return [];
+  const out=[]; let prev=null;
+  for(const r of state.readings){
+    const vc=r.v?.[c.key], vm=r.v?.[m.key];
+    if(typeof vc!=='number'||typeof vm!=='number') continue;
+    const chg=!!(r.chg?.[c.key]||r.chg?.[m.key]);
+    if(prev && !chg){
+      const dc=(vc-prev.vc)*factorOf(c), dm=(vm-prev.vm)*factorOf(m), days=(r.t-prev.t)/DAY;
+      if(days>0.02) out.push({t0:prev.t, t1:r.t, days, dc, dm, diff:dc-dm, tol:toleranceFor(c,days)});
+    }
+    prev={t:r.t, vc, vm};
+  }
+  return out;
+}
+function controlCard(){
+  const cs=controlMeters(); if(!cs.length) return '';
+  const blocks=cs.map(c=>{
+    const m=meterByKey(c.controlOf);
+    const rows=controlSeries(c).slice(-8).reverse();
+    if(!rows.length) return `<div class="stack" style="gap:6px"><h3><span class="dot" style="background:${colorVar(c)}"></span>${esc(c.name)} gegen ${esc(m.name)}</h3>
+      <div class="small muted">Noch keine Ablesung, in der beide Zähler stehen.</div></div>`;
+    const bad=rows.filter(r=>Math.abs(r.diff)>r.tol).length;
+    const last=rows[0];
+    return `<div class="stack" style="gap:6px">
+      <div class="row between"><h3><span class="dot" style="background:${colorVar(c)}"></span>${esc(c.name)} gegen ${esc(m.name)}</h3>
+        <span class="delta ${Math.abs(last.diff)<=last.tol?'down':'up'}">${Math.abs(last.diff)<=last.tol?'✓ zuletzt gleichauf':'⚠ zuletzt '+fmt(last.diff,2)+' kWh daneben'}</span></div>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Zeitraum</th><th>Tage</th><th>${esc(m.name)}</th><th>${esc(c.name)}</th><th>Abweichung</th></tr></thead>
+        <tbody>${rows.map(r=>{ const ok=Math.abs(r.diff)<=r.tol; return `<tr>
+          <td>${fmtDateShort(r.t0)} – ${fmtDateShort(r.t1)}</td>
+          <td class="n">${fmt(r.days,0)}</td>
+          <td class="n">${fmt(r.dm,1)}</td>
+          <td class="n">${fmt(r.dc,1)}</td>
+          <td class="n"><span class="delta ${ok?'flat':'up'}">${ok?'':'⚠ '}${r.diff>0?'+':''}${fmt(r.diff,2)} kWh</span></td></tr>`; }).join('')}</tbody></table></div>
+      <div class="small muted">${bad?`${bad} von ${rows.length} Abschnitten liegen über der erlaubten Abweichung (${tolText(c)}). Wenn das nur bei langen Abständen auftritt, ist es meist ein gleichmäßiger kleiner Versatz – dann unter „Zähler“ den Wert je Tag erhöhen.`
+        :`Alle ${rows.length} Abschnitte liegen innerhalb der erlaubten Abweichung (${tolText(c)}). Die Zähler laufen parallel.`}</div>
+    </div>`;
+  }).join('<div style="height:14px"></div>');
+  return `<div class="card stack">
+    <h2>Zählerabgleich</h2>
+    <div class="small muted">Der Fronius-Wechselrichter zählt parallel zum Zähler der Stadtwerke. Gerechnet wird oben immer mit dem Zähler der Stadtwerke, hier steht nur, ob beide übereinstimmen.</div>
+    ${blocks}</div>`;
+}
+function yearColors(n){ const all=['var(--y1)','var(--y2)','var(--y3)','var(--y4)','var(--y5)']; return all.slice(all.length-n); }
+function drawMonthChart(box, m, years){
+  const data=years.map(y=>monthlyRates(m.key,y));
+  const vals=data.flat().filter(Boolean).map(s=>s.rate);
+  if(!vals.length){ box.innerHTML=`<div class="empty">Zu wenige Ablesungen für ${esc(m.name)}.</div>`; return; }
+  const W=760, H=300, L=52, Rr=12, T=14, B=34; const pw=W-L-Rr, ph=H-T-B;
+  const maxV=Math.max(...vals,0)*1.08||1; const ticks=niceTicks(0,maxV,4);
+  const cols=yearColors(years.length); const gw=pw/12; const bw=Math.max(3,(gw-8)/years.length-2);
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Monatsverlauf ${esc(m.name)}">`;
+  for(const tk of ticks){ const y=T+ph-(tk/maxV)*ph; s+=`<line x1="${L}" x2="${W-Rr}" y1="${y}" y2="${y}" stroke="var(--grid)"/><text class="ylab" x="${L-6}" y="${y+4}" text-anchor="end">${fmt(tk, maxV<5?2:(maxV<50?1:0))}</text>`; }
+  s+=`<line x1="${L}" x2="${W-Rr}" y1="${T+ph}" y2="${T+ph}" stroke="var(--axis)"/>`;
+  for(let mo=0;mo<12;mo++){
+    const gx=L+mo*gw; s+=`<text x="${gx+gw/2}" y="${H-12}" text-anchor="middle">${MONTHS[mo]}</text>`;
+    years.forEach((y,yi)=>{
+      const st=data[yi][mo]; const x=gx+4+yi*(bw+2);
+      if(st){ const h=Math.max(1,(st.rate/maxV)*ph); const yy=T+ph-h;
+        s+=`<rect x="${x}" y="${yy}" width="${bw}" height="${h}" rx="2" fill="${cols[yi]}" data-tip="${esc(`${MONTHS_LONG[mo]} ${y} · ${fmt(st.rate,st.rate<10?2:1)} ${outUnit(m)}/Tag${st.cost>0?' · '+fmtEur(st.costPerDay)+'/Tag':''}${st.temp!=null?' · Ø '+fmtT(st.temp):''}${st.perGtz!=null?' · '+fmt(st.perGtz,2)+' je Gradtag':''}${st.partial?' · teilweise':''}`)}"/>`; }
+    });
+  }
+  s+=`</svg><div class="tip"></div><div class="legend" style="margin-top:8px">${years.map((y,i)=>`<span style="--sw:${cols[i]}">${y}</span>`).join('')}</div>`;
+  box.innerHTML=s; attachTips(box);
+}
+function drawTempChart(box, years){
+  const data=years.map(y=>monthlyTemps(y)); const vals=data.flat().filter(v=>v!=null);
+  if(!vals.length){ box.innerHTML=''; return; }
+  const W=760,H=130,L=52,Rr=12,T=10,B=22; const pw=W-L-Rr, ph=H-T-B;
+  const minV=Math.min(0,Math.floor(Math.min(...vals)/5)*5), maxV=Math.ceil(Math.max(...vals)/5)*5||5;
+  const cols=yearColors(years.length); const gw=pw/12; const Y=v=>T+ph-(v-minV)/(maxV-minV)*ph;
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Monatsmitteltemperatur">`;
+  for(let v=minV; v<=maxV; v+=(maxV-minV>20?10:5)){ const y=Y(v); s+=`<line x1="${L}" x2="${W-Rr}" y1="${y}" y2="${y}" stroke="var(--grid)"/><text class="ylab" x="${L-6}" y="${y+4}" text-anchor="end">${v}°</text>`; }
+  if(minV<0) s+=`<line x1="${L}" x2="${W-Rr}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--axis)"/>`;
+  for(let mo=0;mo<12;mo++) s+=`<text x="${L+mo*gw+gw/2}" y="${H-6}" text-anchor="middle">${MONTHS[mo]}</text>`;
+  years.forEach((y,yi)=>{ let d=''; data[yi].forEach((v,mo)=>{ if(v==null){ d+='|'; return; } const x=L+mo*gw+gw/2; d+=(d===''||d.endsWith('|')?'M':'L')+x+','+Y(v)+' '; }); d=d.replace(/\|/g,''); if(d.trim()) s+=`<path d="${d}" fill="none" stroke="${cols[yi]}" stroke-width="2" stroke-linejoin="round"/>`; data[yi].forEach((v,mo)=>{ if(v==null) return; const x=L+mo*gw+gw/2; s+=`<circle cx="${x}" cy="${Y(v)}" r="3" fill="${cols[yi]}" stroke="var(--surface)" stroke-width="1.5" data-tip="${esc(`${MONTHS_LONG[mo]} ${y} · Ø ${fmtT(v)}`)}"/>`; }); });
+  s+=`</svg><div class="tip"></div>`;
+  box.innerHTML=s; attachTips(box);
+}
+function drawScatter(box, m){
+  const pts=series(m.key); const items=[];
+  for(let i=1;i<pts.length;i++){ const p=pts[i]; if(p.rate==null||p.days<3) continue; const ts=tempStats(pts[i-1].t,p.t); if(!ts) continue; const d=new Date(p.t); const hy=d.getMonth()>=6?d.getFullYear():d.getFullYear()-1; items.push({x:ts.mean,y:p.rate,hy,t0:pts[i-1].t,t1:p.t,days:p.days}); }
+  if(items.length<3){ box.innerHTML=`<div class="empty">${hasWeather()?'Noch zu wenige Abschnitte mit Wetterdaten.':'Keine Wetterdaten – Standort unter „Zähler“ festlegen.'}</div>`; return; }
+  const seasons=[...new Set(items.map(i=>i.hy))].sort(); const shown=seasons.slice(-5); const cols=yearColors(shown.length);
+  const W=760,H=320,L=52,Rr=12,T=14,B=36; const pw=W-L-Rr, ph=H-T-B;
+  const xs=items.map(i=>i.x), ys=items.map(i=>i.y);
+  const minX=Math.floor(Math.min(...xs)/5)*5-2, maxX=Math.ceil(Math.max(...xs)/5)*5+2; const maxY=Math.max(...ys)*1.08||1;
+  const X=v=>L+(v-minX)/(maxX-minX)*pw, Y=v=>T+ph-(v/maxY)*ph;
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(m.name)} gegen Außentemperatur">`;
+  for(const tk of niceTicks(0,maxY,4)){ s+=`<line x1="${L}" x2="${W-Rr}" y1="${Y(tk)}" y2="${Y(tk)}" stroke="var(--grid)"/><text class="ylab" x="${L-6}" y="${Y(tk)+4}" text-anchor="end">${fmt(tk, maxY<5?2:(maxY<50?1:0))}</text>`; }
+  for(let v=Math.ceil(minX/5)*5; v<=maxX; v+=5){ s+=`<line x1="${X(v)}" x2="${X(v)}" y1="${T}" y2="${T+ph}" stroke="var(--grid)"/><text x="${X(v)}" y="${H-14}" text-anchor="middle">${v} °C</text>`; }
+  s+=`<line x1="${L}" x2="${W-Rr}" y1="${T+ph}" y2="${T+ph}" stroke="var(--axis)"/>`;
+  for(const it of items){ const si=shown.indexOf(it.hy); if(si<0) continue; s+=`<circle cx="${X(it.x)}" cy="${Y(it.y)}" r="${Math.min(9,4+Math.sqrt(it.days)/2)}" fill="${cols[si]}" fill-opacity="0.8" stroke="var(--surface)" stroke-width="1.5" data-tip="${esc(`${fmtDateShort(it.t0)} – ${fmtDateShort(it.t1)} (${fmt(it.days,0)} Tage) · Ø ${fmtT(it.x)} · ${fmt(it.y,it.y<10?2:1)} ${outUnit(m)}/Tag`)}"/>`; }
+  s+=`</svg><div class="tip"></div><div class="legend" style="margin-top:8px">${shown.map((y,i)=>`<span style="--sw:${cols[i]}">Heizjahr ${y}/${String(y+1).slice(2)}</span>`).join('')}<span class="tiny" style="margin-left:auto">Punktgröße = Länge des Abschnitts</span></div>`;
+  box.innerHTML=s; attachTips(box);
+}
+function drawLongChart(box, m){
+  const pts=series(m.key); const now=Date.now();
+  const from = state.longRange==='all' ? -Infinity : now-(state.longRange==='1y'?1:3)*365*DAY;
+  const segs=[]; for(let i=1;i<pts.length;i++){ const p=pts[i]; if(p.rate==null||p.t<from) continue; const ts=m.weather?tempStats(pts[i-1].t,p.t):null; segs.push({t0:pts[i-1].t, t1:p.t, rate:p.rate, amount:p.amount, days:p.days, cost:costBetween(m,pts[i-1].t,p.t,p.amount), note:p.note, chg:p.chg, temp:ts?ts.mean:null}); }
+  if(!segs.length){ box.innerHTML=`<div class="empty">Keine Abschnitte im Zeitraum.</div>`; return; }
+  const t0=Math.max(from, segs[0].t0), t1=segs[segs.length-1].t1;
+  const W=760,H=260,L=52,Rr=12,T=14,B=30; const pw=W-L-Rr, ph=H-T-B;
+  const maxV=Math.max(...segs.map(s=>s.rate),0)*1.08||1; const ticks=niceTicks(0,maxV,4);
+  const X=t=>L+(t-t0)/(t1-t0)*pw, Y=v=>T+ph-(v/maxV)*ph;
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Verbrauch zwischen Ablesungen ${esc(m.name)}">`;
+  for(const tk of ticks){ const y=Y(tk); s+=`<line x1="${L}" x2="${W-Rr}" y1="${y}" y2="${y}" stroke="var(--grid)"/><text class="ylab" x="${L-6}" y="${y+4}" text-anchor="end">${fmt(tk, maxV<5?2:(maxV<50?1:0))}</text>`; }
+  const span=t1-t0; const d0=new Date(t0);
+  if(span>400*DAY){ for(let y=d0.getFullYear()+1;y<=new Date(t1).getFullYear();y++){ const x=X(new Date(y,0,1).getTime()); if(x>L&&x<W-Rr) s+=`<line x1="${x}" x2="${x}" y1="${T}" y2="${T+ph}" stroke="var(--grid)"/><text x="${x}" y="${H-10}" text-anchor="middle">${y}</text>`; } }
+  else { let d=new Date(d0.getFullYear(),d0.getMonth()+1,1); while(d.getTime()<t1){ const x=X(d.getTime()); s+=`<line x1="${x}" x2="${x}" y1="${T}" y2="${T+ph}" stroke="var(--grid)"/><text x="${x}" y="${H-10}" text-anchor="middle">${MONTHS[d.getMonth()]}${d.getMonth()===0?' '+d.getFullYear():''}</text>`; d=new Date(d.getFullYear(),d.getMonth()+1,1);} }
+  s+=`<line x1="${L}" x2="${W-Rr}" y1="${T+ph}" y2="${T+ph}" stroke="var(--axis)"/>`;
+  const col=colorVar(m);
+  let path=''; for(const sg of segs){ const xa=X(Math.max(sg.t0,t0)), xb=X(sg.t1), y=Y(sg.rate); path+=`M${xa},${T+ph} L${xa},${y} L${xb},${y} L${xb},${T+ph} Z `; }
+  s+=`<path d="${path}" fill="${col}" fill-opacity="0.18" stroke="none"/>`;
+  let line=''; segs.forEach((sg,i)=>{ const xa=X(Math.max(sg.t0,t0)), xb=X(sg.t1), y=Y(sg.rate); line+=`${i?'L':'M'}${xa},${y} L${xb},${y} `; });
+  s+=`<path d="${line}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round"/>`;
+  for(const sg of segs){ const x=X(sg.t1), y=Y(sg.rate); s+=`<circle cx="${x}" cy="${y}" r="3.5" fill="${col}" stroke="var(--surface)" stroke-width="2"/>`; if(sg.chg) s+=`<text x="${x}" y="${T-2}" text-anchor="middle" style="fill:var(--warn-text)">⟲</text>`; }
+  for(const sg of segs){ const xa=X(Math.max(sg.t0,t0)), xb=X(sg.t1); s+=`<rect x="${xa}" y="${T}" width="${Math.max(2,xb-xa)}" height="${ph}" fill="transparent" data-tip="${esc(`${fmtDateShort(sg.t0)} – ${fmtDateShort(sg.t1)} (${fmt(sg.days,0)} Tage) · ${fmt(sg.rate,sg.rate<10?2:1)} ${outUnit(m)}/Tag · ${fmt(sg.amount,0)} ${outUnit(m)}${sg.cost>0?' · '+fmtEur(sg.cost,0):''}${sg.temp!=null?' · Ø '+fmtT(sg.temp):''}${sg.note?' · '+sg.note:''}`)}"/>`; }
+  s+=`</svg><div class="tip"></div>`;
+  box.innerHTML=s; attachTips(box);
+}
+function niceTicks(min,max,n){ const raw=(max-min)/n; const p=Math.pow(10,Math.floor(Math.log10(raw||1))); const f=raw/p; const step=(f<1.5?1:f<3?2:f<7?5:10)*p; const out=[]; for(let v=Math.ceil(min/step)*step; v<=max+1e-9; v+=step) out.push(+v.toFixed(6)); return out; }
+function attachTips(box){
+  const tip=$('.tip',box); const svg=$('svg',box); if(!tip||!svg) return;
+  const show=(el)=>{ tip.innerHTML=esc(el.dataset.tip).replace(/(\d[\d.,]*)/g,'<b>$1</b>'); tip.style.display='block'; const r=box.getBoundingClientRect(); const er=el.getBoundingClientRect(); let x=er.left+er.width/2-r.left; const y=er.top-r.top; x=Math.max(90,Math.min(r.width-90,x)); tip.style.left=x+'px'; tip.style.top=Math.max(30,y)+'px'; };
+  svg.addEventListener('mouseover',e=>{ const el=e.target.closest('[data-tip]'); if(el) show(el); });
+  svg.addEventListener('mouseout',e=>{ if(e.target.closest('[data-tip]')) tip.style.display='none'; });
+  svg.addEventListener('click',e=>{ const el=e.target.closest('[data-tip]'); if(el){ show(el); setTimeout(()=>tip.style.display='none',2500); } });
+}
+
+/* ===== Vergleich ===== */
+function presetPeriods(p){
+  const now=Date.now(); const y=new Date().getFullYear();
+  const startY=new Date(y,0,1).getTime();
+  if(p==='l30') return {a0:now-30*DAY,a1:now,b0:now-60*DAY,b1:now-30*DAY, la:'Letzte 30 Tage', lb:'30 Tage davor'};
+  if(p==='l90') return {a0:now-90*DAY,a1:now,b0:now-180*DAY,b1:now-90*DAY, la:'Letzte 90 Tage', lb:'90 Tage davor'};
+  if(p==='ytd') return {a0:startY,a1:now,b0:new Date(y-1,0,1).getTime(),b1:now-365*DAY, la:`${y} bis heute`, lb:`${y-1} gleicher Zeitraum`};
+  if(p==='l12') return {a0:now-365*DAY,a1:now,b0:now-730*DAY,b1:now-365*DAY, la:'Letzte 12 Monate', lb:'12 Monate davor'};
+  if(p==='year') return {a0:new Date(y-1,0,1).getTime(),a1:startY,b0:new Date(y-2,0,1).getTime(),b1:new Date(y-1,0,1).getTime(), la:`Jahr ${y-1}`, lb:`Jahr ${y-2}`};
+  if(p==='heat'){ const m=new Date().getMonth(); const hy = m>=9 ? y : y-1;
+    return {a0:new Date(hy,9,1).getTime(),a1:Math.min(now,new Date(hy+1,4,1).getTime()),b0:new Date(hy-1,9,1).getTime(),b1:Math.min(now-365*DAY,new Date(hy,4,1).getTime()), la:`Heizperiode ${hy}/${String(hy+1).slice(2)}`, lb:`Heizperiode ${hy-1}/${String(hy).slice(2)}`}; }
+  return null;
+}
+function renderCompare(){
+  const el=$('#tab-compare'); const c=state.cmp;
+  if(!state.readings.length){ el.innerHTML=`<div class="card empty">Noch keine Ablesungen.</div>`; return; }
+  let per=presetPeriods(c.preset);
+  if(!per){ per={a0:c.a0,a1:c.a1,b0:c.b0,b1:c.b1,la:'Zeitraum A',lb:'Zeitraum B'}; }
+  const ms=mainMeters();
+  const rows=ms.map(m=>({m, A:per.a0&&per.a1?periodStats(m.key,per.a0,per.a1):null, B:per.b0&&per.b1?periodStats(m.key,per.b0,per.b1):null}));
+  let tA=0,tB=0,hasT=false;
+  for(const r of rows) if(r.m.inTotal&&r.A&&r.B){ tA+=r.A.costPerDay; tB+=r.B.costPerDay; hasT=true; }
+  const presets=[['l30','30 Tage'],['l90','90 Tage'],['ytd','Jahr bis heute'],['l12','12 Monate'],['year','Vorjahr komplett'],['heat','Heizperiode'],['custom','Eigene Zeiträume']];
+  const wrows=rows.filter(r=>r.m.weather&&r.A&&r.B&&r.A.temp!=null&&r.B.temp!=null);
+  el.innerHTML=`
+  <div class="card stack">
+    <h2>Zeiträume vergleichen</h2>
+    <div class="chips">${presets.map(([k,l])=>`<button class="chip" aria-pressed="${c.preset===k}" data-preset="${k}">${l}</button>`).join('')}</div>
+    <div class="periods">
+      <div class="pbox pA"><div class="ph"><i style="background:var(--pc)"></i>A · ${esc(per.la)}</div>
+        <div class="grid2"><label class="field"><span>von</span><input type="date" data-p="a0" value="${per.a0?toDateInput(per.a0):''}" ${c.preset!=='custom'?'disabled':''}></label><label class="field"><span>bis</span><input type="date" data-p="a1" value="${per.a1?toDateInput(per.a1):''}" ${c.preset!=='custom'?'disabled':''}></label></div></div>
+      <div class="pbox pB"><div class="ph"><i style="background:var(--pc)"></i>B · ${esc(per.lb)}</div>
+        <div class="grid2"><label class="field"><span>von</span><input type="date" data-p="b0" value="${per.b0?toDateInput(per.b0):''}" ${c.preset!=='custom'?'disabled':''}></label><label class="field"><span>bis</span><input type="date" data-p="b1" value="${per.b1?toDateInput(per.b1):''}" ${c.preset!=='custom'?'disabled':''}></label></div></div>
+    </div>
+    <div class="tiny">Ø pro Tag macht unterschiedlich lange Zeiträume vergleichbar. Kosten nach dem jeweils gültigen Preis. Ein Zeitraum ohne Ablesungen an beiden Enden wird auf die vorhandenen Daten gekürzt (Hinweis „gekürzt“).</div>
+  </div>
+  <div class="card">
+    <div class="tablewrap"><table>
+      <thead><tr><th>Zähler</th><th>A Ø/Tag</th><th>B Ø/Tag</th><th>Δ</th><th>A gesamt</th><th>B gesamt</th><th>A €</th><th>B €</th><th>Δ €</th></tr></thead>
+      <tbody>
+      ${rows.map(({m,A,B})=>{
+        const ou=outUnit(m); const dp=A&&B&&B.rate?((A.rate-B.rate)/Math.abs(B.rate)*100):null; const feed=/einspeis/i.test(m.name);
+        const cls=dp==null?'flat':(Math.abs(dp)<2?'flat':((dp>0)!==feed?'up':'down'));
+        const maxR=Math.max(A?.rate||0,B?.rate||0)||1;
+        const bar=v=>v!=null?`<span class="bar" style="--sw:${colorVar(m)};width:${Math.max(2,Math.round(v/maxR*60))}px"></span>`:'';
+        return `<tr><td><span class="dot" style="background:${colorVar(m)}"></span>${esc(m.name)} <span class="tiny">${esc(ou)}</span>${(A?.partial||B?.partial)?' <span class="tiny">gekürzt</span>':''}</td>
+          <td class="n">${A?fmt(A.rate,A.rate<10?2:1)+bar(A.rate):'–'}</td><td class="n">${B?fmt(B.rate,B.rate<10?2:1)+bar(B.rate):'–'}</td>
+          <td class="n"><span class="delta ${cls}">${dp==null?'–':(dp>0?'+':'')+fmt(dp,0)+' %'}</span></td>
+          <td class="n">${A?fmt(A.amount,0):'–'}</td><td class="n">${B?fmt(B.amount,0):'–'}</td>
+          <td class="n">${A&&A.cost?fmtEur(A.cost,0):'–'}</td><td class="n">${B&&B.cost?fmtEur(B.cost,0):'–'}</td>
+          <td class="n">${A&&B&&(A.cost||B.cost)?`<span class="delta ${A.cost-B.cost>0?'up':(A.cost-B.cost<0?'down':'flat')}">${A.cost-B.cost>0?'+':''}${fmtEur(A.cost-B.cost,0)}</span>`:'–'}</td></tr>`;
+      }).join('')}
+      ${hasT?`<tr><td><b>Kosten gesamt pro Tag</b></td><td class="n"><b>${fmtEur(tA)}</b></td><td class="n"><b>${fmtEur(tB)}</b></td><td class="n"><span class="delta ${tA>tB*1.02?'up':(tA<tB*0.98?'down':'flat')}">${tB?((tA-tB)/tB*100>0?'+':'')+fmt((tA-tB)/tB*100,0)+' %':'–'}</span></td><td colspan="5"></td></tr>`:''}
+      </tbody></table></div>
+    <div class="tiny" style="margin-top:8px">A: ${per.a0?fmtDate(per.a0):'–'} – ${per.a1?fmtDate(per.a1):'–'} · B: ${per.b0?fmtDate(per.b0):'–'} – ${per.b1?fmtDate(per.b1):'–'}. Bei Einspeisung ist „mehr“ gut (grün).</div>
+  </div>
+  ${ms.some(m=>m.weather)?`<div class="card stack">
+    <h2>Witterungsbereinigt</h2>
+    ${weatherBanner()}
+    ${wrows.length?wrows.map(({m,A,B})=>{ const ou=outUnit(m); const d=A.perGtz!=null&&B.perGtz?(A.perGtz-B.perGtz)/B.perGtz*100:null; const dr=(A.rate-B.rate)/Math.abs(B.rate||1)*100;
+      return `<div class="stack" style="gap:6px"><h3><span class="dot" style="background:${colorVar(m)}"></span>${esc(m.name)}</h3>
+      <div class="kv"><span></span><span class="h">A</span><span class="h">B</span><span class="h">Δ</span>
+        <span class="k">Ø Außentemperatur</span><span class="n">${fmtT(A.temp)}</span><span class="n">${fmtT(B.temp)}</span><span class="n">${fmt(A.temp-B.temp,1)} K</span>
+        <span class="k">Gradtage (20/15)</span><span class="n">${fmt(A.gtz,0)}</span><span class="n">${fmt(B.gtz,0)}</span><span class="n">${fmt(A.gtz-B.gtz,0)}</span>
+        <span class="k">Verbrauch ${esc(ou)}</span><span class="n">${fmt(A.amount,0)}</span><span class="n">${fmt(B.amount,0)}</span><span class="n"><span class="delta ${dr>2?'up':(dr<-2?'down':'flat')}">${dr>0?'+':''}${fmt(dr,0)} %</span></span>
+        <span class="k">${esc(ou)} je Gradtag</span><span class="n">${A.perGtz!=null?fmt(A.perGtz,2):'–'}</span><span class="n">${B.perGtz!=null?fmt(B.perGtz,2):'–'}</span><span class="n">${d!=null?`<span class="delta ${d>2?'up':(d<-2?'down':'flat')}">${d>0?'+':''}${fmt(d,0)} %</span>`:'–'}</span></div>
+      <div class="small muted">${d==null?'Zu wenige Heiztage für eine Bereinigung (z. B. Sommer).':(Math.abs(d)<3?`Bezogen auf die Heizgradtage war der Verbrauch praktisch gleich – der Unterschied von ${fmt(dr,0)} % erklärt sich durch das Wetter.`:`Bezogen auf die Heizgradtage war der Verbrauch in A um ${fmt(Math.abs(d),0)} % ${d>0?'höher':'niedriger'} als in B – das Wetter erklärt also nur einen Teil des Unterschieds.`)}</div></div>`; }).join(''):
+      (hasWeather()?`<div class="small muted">Für die gewählten Zeiträume liegen keine vollständigen Temperaturdaten vor.</div>`:'')}
+  </div>`:''}`;
+  $$('[data-preset]',el).forEach(b=>b.addEventListener('click',()=>{ const k=b.dataset.preset; if(k==='custom'&&c.preset!=='custom'){ const p=presetPeriods(c.preset)||{}; Object.assign(c,{a0:p.a0||Date.now()-30*DAY,a1:p.a1||Date.now(),b0:p.b0||Date.now()-60*DAY,b1:p.b1||Date.now()-30*DAY}); } c.preset=k; renderCompare(); }));
+  $$('[data-p]',el).forEach(i=>i.addEventListener('change',()=>{ const k=i.dataset.p; c[k]=fromDateInput(i.value, k.endsWith('1')); renderCompare(); }));
+}
+
+/* ===== Verlauf ===== */
+function renderHistory(){
+  const el=$('#tab-history'); const ms=meters();
+  const list=[...state.readings].reverse();
+  el.innerHTML=`<div class="card stack">
+    <div class="row between"><h2>Alle Ablesungen</h2><a class="btn sm" href="api.php?p=export.xlsx" download>⬇ Excel exportieren</a></div>
+    <div class="tiny">Der Export enthält alle Zählerstände, den Verbrauch je Abschnitt mit Kosten, Ø Außentemperatur und Gradtagen, die Tagestemperaturen und die Zähler-Einstellungen.</div>
+    ${list.length?`<div class="hist">${list.map(r=>{
+      const vals=ms.filter(m=>typeof r.v?.[m.key]==='number').map(m=>`<span><span class="dot" style="background:${colorVar(m)}"></span>${esc(m.name)} <b>${fmt(r.v[m.key],m.decimals)}</b>${r.chg?.[m.key]?' <span class="chgflag">⟲ neu</span>':''}</span>`).join('');
+      const notes=r.n?Object.entries(r.n).map(([k,v])=>`${esc(meterByKey(k)?.name||k)}: ${esc(v)}`).join(' · '):'';
+      const thumbs=(r.ph||[]).map(e=>`<span class="thumbwrap"><img class="thumb" loading="lazy" src="${photoUrl(r.id,e.f)}" alt="Foto ${esc(meterByKey(e.m)?.name||'')}" data-view="${r.id}|${esc(e.f)}|${esc(e.m||'')}"><span class="cap">${esc((meterByKey(e.m)?.name||'').slice(0,10))}</span></span>`).join('');
+      return `<div class="hrow" data-edit="${r.id}"><div class="hd">${fmtDateTime(r.t)}<small>${r.src==='photo'?'per Foto':(r.src==='import'?'aus Excel':'von Hand')}</small></div><div class="vals">${vals||'<span class="tiny">keine Werte</span>'}</div>${notes?`<div class="note">${notes}</div>`:''}${thumbs?`<div class="thumbs">${thumbs}</div>`:''}</div>`;
+    }).join('')}</div>`:`<div class="empty">Noch keine Ablesungen.</div>`}
+  </div>`;
+  if(canEdit()) $$('[data-edit]',el).forEach(r=>r.addEventListener('click',e=>{ if(e.target.closest('[data-view]')) return; openEdit(r.dataset.edit); }));
+  else $$('.hrow',el).forEach(r=>r.style.cursor='default');
+  $$('[data-view]',el).forEach(i=>i.addEventListener('click',e=>{ e.stopPropagation(); const [id,f,m]=i.dataset.view.split('|'); openPhoto(id,f,m); }));
+}
+function photoUrl(id, file){ return `api.php?p=photo&id=${encodeURIComponent(id)}&f=${encodeURIComponent(file)}`; }
+/* Großansicht eines archivierten Fotos, mit dem zugehörigen Zählerstand darunter */
+function openPhoto(id, file, meterKey){
+  const r=state.readings.find(x=>x.id===id);
+  const m=meterByKey(meterKey);
+  const val=(r&&m&&typeof r.v?.[m.key]==='number')?r.v[m.key]:null;
+  $('#modalbox').innerHTML=`<div class="viewer">
+    <div class="row between"><h2>${m?esc(m.name):'Foto'}</h2><button class="btn sm" id="v-close">Schließen</button></div>
+    <img src="${photoUrl(id,file)}" alt="">
+    <div class="small muted">${r?fmtDateTime(r.t):''}${val!=null?` · eingetragener Stand <b class="num">${fmt(val,m.decimals)}</b> ${esc(m.unit)}`:''}</div>
+    <div class="row"><a class="btn sm" href="${photoUrl(id,file)}" target="_blank" rel="noopener">In neuem Tab öffnen</a>
+      ${r&&canEdit()?`<button class="btn sm" id="v-edit">Ablesung bearbeiten</button>`:''}</div>
+  </div>`;
+  $('#modal').hidden=false;
+  $('#v-close').onclick=closeModal;
+  $('#v-edit')?.addEventListener('click',()=>openEdit(id));
+}
+function openEdit(id){
+  if(!canEdit()) return;
+  const r=state.readings.find(x=>x.id===id); if(!r) return;
+  const e={id, t:r.t, v:{...(r.v||{})}, n:{...(r.n||{})}, chg:{...(r.chg||{})}, src:r.src}; const box=$('#modalbox');
+  box.innerHTML=`<div class="stack">
+    <div class="row between"><h2>Ablesung bearbeiten</h2><button class="btn sm" id="m-close">Schließen</button></div>
+    <label class="field" style="max-width:260px"><span>Zeitpunkt</span><input type="datetime-local" id="m-time" value="${toLocalInput(e.t)}"></label>
+    <div>${meters().map(m=>`<div class="mrow"><div><div class="mname"><span class="dot" style="background:${colorVar(m)}"></span>${esc(m.name)} <span class="tiny">${esc(m.unit)}</span></div></div>
+      <div class="stack" style="gap:4px"><input type="text" inputmode="decimal" data-mv="${m.key}" value="${typeof e.v[m.key]==='number'?String(e.v[m.key]).replace('.',','):''}" placeholder="–"></div>
+      <div class="extra"><div class="opts"><label class="toggle"><input type="checkbox" data-mchg="${m.key}" ${e.chg[m.key]?'checked':''}> Zählerwechsel</label></div><input type="text" data-mn="${m.key}" value="${esc(e.n[m.key]||'')}" placeholder="Notiz"></div></div>`).join('')}</div>
+    ${(r.ph||[]).length?`<div><div class="label" style="margin-bottom:6px">Fotos zu dieser Ablesung</div>
+      <div class="editphotos">${r.ph.map(e=>`<div class="editphoto"><img src="${photoUrl(r.id,e.f)}" alt="" title="${esc(meterByKey(e.m)?.name||'')}" data-big="${esc(e.f)}|${esc(e.m||'')}"><button class="x" data-delph="${esc(e.f)}" title="Foto löschen">✕</button></div>`).join('')}</div></div>`:''}
+    <div class="row between"><button class="btn danger" id="m-del">Löschen</button><button class="btn primary" id="m-save">Speichern</button></div>
+  </div>`;
+  $('#modal').hidden=false;
+  $('#m-close').onclick=closeModal;
+  $$('[data-big]',box).forEach(i=>i.addEventListener('click',()=>{ const [f,mk]=i.dataset.big.split('|'); openPhoto(id,f,mk); }));
+  $$('[data-delph]',box).forEach(b=>b.addEventListener('click',async()=>{
+    if(!confirm('Dieses Foto endgültig löschen? Die Ablesung bleibt erhalten.')) return;
+    try{ await api('POST','delete-photo',{id, file:b.dataset.delph}); await loadState(); toast('Foto gelöscht'); openEdit(id); }
+    catch(e){ toast('Fehler: '+(e.message||e.code)); }
+  }));
+  $('#m-save').onclick=async()=>{
+    const t=new Date($('#m-time').value).getTime(); if(!isFinite(t)) return toast('Ungültiger Zeitpunkt');
+    const v={},n={},chg={};
+    $$('[data-mv]',box).forEach(i=>{ const x=parseNum(i.value); if(x!=null) v[i.dataset.mv]=x; });
+    $$('[data-mn]',box).forEach(i=>{ if(i.value.trim()) n[i.dataset.mn]=i.value.trim(); });
+    $$('[data-mchg]',box).forEach(i=>{ if(i.checked) chg[i.dataset.mchg]=true; });
+    if(!Object.keys(v).length&&!confirm('Keine Werte – Ablesung trotzdem behalten?')) return;
+    const doc={t,v,src:e.src||'manual',edited:Date.now()}; if(Object.keys(n).length) doc.n=n; if(Object.keys(chg).length) doc.chg=chg;
+    try{ await store.saveReading(id, doc); toast('Gespeichert'); closeModal(); }catch(err){ toast('Fehler: '+(err.message||err.code)); }
+  };
+  $('#m-del').onclick=async()=>{ if(!confirm('Diese Ablesung wirklich löschen?')) return; try{ await store.deleteReading(id); toast('Gelöscht'); closeModal(); }catch(err){ toast('Fehler: '+(err.message||err.code)); } };
+}
+function closeModal(){ $('#modal').hidden=true; }
+$('#modal').addEventListener('click',e=>{ if(e.target.id==='modal' && !$('#pwbox')) closeModal(); });
+
+/* ===== Zähler (Konfiguration) ===== */
+function renderMeters(){
+  const el=$('#tab-meters'); const ms=meters(); const loc=state.cfg?.location||null; const draft=state.geoDraft;
+  el.innerHTML=`<div class="card stack">
+    <h2>Standort für Wetterdaten</h2>
+    <div class="small muted">Tagesmitteltemperaturen kommen von Open-Meteo (kostenlos, ohne Konto). Ort suchen und auswählen – die Koordinaten werden gespeichert, die Adresse nicht.</div>
+    <div class="row"><input type="text" id="geo-q" placeholder="Ort oder PLZ, z. B. Hamburg" style="max-width:320px"><button class="btn" id="geo-go">Suchen</button></div>
+    ${state.geoResults.length?`<div class="geo">${state.geoResults.map((g,i)=>`<button data-geo="${i}">${esc(g.name)}${g.admin?', '+esc(g.admin):''} (${esc(g.country)}) <span class="tiny num">${fmt(g.lat,3)}, ${fmt(g.lon,3)}</span></button>`).join('')}</div>`:''}
+    <div class="row between"><span class="small">${draft?`Ausgewählt: <b>${esc(draft.name)}</b> <span class="num tiny">${fmt(draft.lat,3)}, ${fmt(draft.lon,3)}</span> – noch nicht gespeichert`:(loc?`Aktuell: <b>${esc(loc.name||'')}</b> <span class="num tiny">${fmt(loc.lat,3)}, ${fmt(loc.lon,3)}</span>${state.weather.updated?` · Wetter bis ${esc(Object.keys(state.weather.daily).sort().pop()||'–')}`:''}`:'Noch kein Standort festgelegt.')}</span>
+      ${loc&&!draft?`<button class="btn sm" id="wx-refresh">Wetter neu laden</button>`:''}</div>
+  </div>
+  <div class="card stack">
+    <h2>Zähler und Preise</h2>
+    <div class="small muted">Seriennummern helfen bei der Foto-Erkennung. Preise gelten ab dem angegebenen Datum; frühere Zeiträume nutzen den jeweils davor gültigen Preis. Gas: Zustandszahl × Brennwert rechnet m³ in kWh um. „Wetter“ blendet Außentemperatur und Gradtage für diesen Zähler ein.</div>
+  </div>
+  ${ms.map((m,i)=>`<div class="card mcard" data-mi="${i}">
+    <div class="row between"><h3><span class="dot" style="background:${colorVar(m)}"></span>${esc(m.name)} <span class="tiny">${esc(m.key)}</span></h3>
+      <div class="row"><label class="toggle"><input type="checkbox" data-f="active" ${m.active!==false?'checked':''}> aktiv</label><label class="toggle"><input type="checkbox" data-f="inTotal" ${m.inTotal?'checked':''}> in Kostensumme</label><label class="toggle"><input type="checkbox" data-f="weather" ${m.weather?'checked':''}> Wetter</label></div></div>
+    <div class="grid3">
+      <label class="field"><span>Name</span><input type="text" data-f="name" value="${esc(m.name)}"></label>
+      <label class="field"><span>Einheit am Zähler</span><input type="text" data-f="unit" value="${esc(m.unit)}"></label>
+      <label class="field"><span>Nachkommastellen</span><input type="number" data-f="decimals" min="0" max="4" value="${m.decimals??2}"></label>
+      <label class="field" style="grid-column:1/-1"><span>Seriennummern / IDs (Komma-getrennt)</span><input type="text" data-f="ids" value="${esc((m.ids||[]).join(', '))}"></label>
+      <label class="field" style="grid-column:1/-1"><span>Hinweis für die Foto-Erkennung</span><input type="text" data-f="hint" value="${esc(m.hint||'')}"></label>
+      <label class="field"><span>Kontrollzähler von</span><select data-f="controlOf"><option value="">– eigener Zähler –</option>${meters().filter(x=>x.key!==m.key&&!x.controlOf).map(x=>`<option value="${x.key}" ${m.controlOf===x.key?'selected':''}>${esc(x.name)}</option>`).join('')}</select></label>
+      <label class="field"><span>erlaubte Abweichung ${esc(outUnit(m))}</span><input type="text" inputmode="decimal" data-f="tolerance" value="${m.tolerance??''}" placeholder="1"></label>
+      <label class="field"><span>zusätzlich je Tag</span><input type="text" inputmode="decimal" data-f="tolPerDay" value="${m.tolPerDay??''}" placeholder="0"></label>
+      ${m.key==='gas'||m.factors?`<label class="field"><span>Zustandszahl</span><input type="text" inputmode="decimal" data-f="zz" value="${m.factors?.zz??''}"></label>
+      <label class="field"><span>Brennwert kWh/m³</span><input type="text" inputmode="decimal" data-f="bw" value="${m.factors?.bw??''}"></label>
+      <label class="field"><span>Ergebnis-Einheit</span><input type="text" data-f="outUnit" value="${esc(m.outUnit||'')}"></label>`:''}
+    </div>
+    <div class="label">Preis je ${esc(outUnit(m))} <span style="text-transform:none;letter-spacing:0;font-weight:400">– mit der Taste links vom Feld auf minus stellen, wenn es Geld gibt (Einspeisevergütung)</span></div>
+    <div class="prices" data-prices>
+      ${(m.prices||[]).map((p,pi)=>{ const neg=Number(p.price)<0; return `<div class="prow">
+        <input type="date" data-pf="${pi}" value="${esc(p.from)}">
+        <button type="button" class="sign${neg?' neg':''}" data-psign="${pi}" title="Vorzeichen umschalten – minus bedeutet Gutschrift" aria-label="Vorzeichen umschalten, aktuell ${neg?'minus':'plus'}">${neg?'−':'+'}</button>
+        <input type="text" inputmode="decimal" data-pp="${pi}" value="${String(p.price).replace('.',',')}" placeholder="€">
+        <button class="btn sm" data-pdel="${pi}" aria-label="Preis entfernen">✕</button></div>`; }).join('')}
+      <button class="btn sm" data-padd style="align-self:flex-start">+ Preis ab Datum</button>
+    </div>
+  </div>`).join('')}
+  <div class="card row between" id="cfg-actions"><span class="small muted">${state.features.model?`Foto-Erkennung: ${esc(state.features.model)}`:''}</span><div class="row"><button class="btn primary" id="cfg-save">Einstellungen speichern</button></div></div>`;
+  if(!canEdit()){
+    // Lesezugang: alles anzeigen, nichts anfassen
+    el.insertAdjacentHTML('afterbegin', `<div class="banner warn">Dieser Zugang darf nur ansehen. Die Einstellungen stehen hier zur Ansicht, lassen sich aber nicht ändern.</div>`);
+    $$('#tab-meters input, #tab-meters select, #tab-meters button').forEach(x=>{ x.disabled=true; });
+    const act=$('#cfg-actions'); if(act) act.hidden=true;
+    return;
+  }
+  const geoSearch=async()=>{ const q=$('#geo-q').value.trim(); if(!q) return; try{ state.geoResults=await api('GET','geocode&q='+encodeURIComponent(q)); if(!state.geoResults.length) toast('Nichts gefunden'); renderMeters(); $('#geo-q').value=q; }catch(e){ toast('Suche fehlgeschlagen: '+(e.message||e.code)); } };
+  $('#geo-go').addEventListener('click', geoSearch); $('#geo-q').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); geoSearch(); } });
+  $$('[data-geo]',el).forEach(b=>b.addEventListener('click',()=>{ const g=state.geoResults[Number(b.dataset.geo)]; state.geoDraft={name:g.name+(g.admin?', '+g.admin:''), lat:g.lat, lon:g.lon}; state.geoResults=[]; renderMeters(); toast('Standort gewählt – unten „Einstellungen speichern“'); }));
+  $('#wx-refresh')?.addEventListener('click', ()=>refreshWeather(true));
+  $$('[data-padd]',el).forEach(b=>b.addEventListener('click',()=>{ const cfg=collectConfig(); const i=Number(b.closest('[data-mi]').dataset.mi); cfg.meters[i].prices.push({from:toDateInput(Date.now()),price:0}); state.cfg=cfg; renderMeters(); }));
+  $$('[data-pdel]',el).forEach(b=>b.addEventListener('click',()=>{ const cfg=collectConfig(); const i=Number(b.closest('[data-mi]').dataset.mi); cfg.meters[i].prices.splice(Number(b.dataset.pdel),1); state.cfg=cfg; renderMeters(); }));
+  // Vorzeichen: auf dem Handy hat die Zifferntastatur kein Minus, deshalb eine eigene Taste
+  const zeigeVorzeichen=(btn,inp)=>{ const neg=inp.value.trim().startsWith('-');
+    btn.textContent=neg?'−':'+'; btn.classList.toggle('neg',neg);
+    btn.setAttribute('aria-label','Vorzeichen umschalten, aktuell '+(neg?'minus':'plus')); };
+  $$('[data-psign]',el).forEach(btn=>{
+    const inp=$(`[data-pp="${btn.dataset.psign}"]`, btn.closest('.prow'));
+    btn.addEventListener('click',()=>{ const t=inp.value.trim();
+      inp.value = t.startsWith('-') ? t.slice(1) : ('-'+(t===''?'0':t));
+      zeigeVorzeichen(btn,inp); inp.scrollLeft=0; });
+    inp.addEventListener('input',()=>zeigeVorzeichen(btn,inp));
+  });
+  $('#cfg-save').addEventListener('click', async()=>{ const cfg=collectConfig(); try{ await store.saveConfig(cfg); state.geoDraft=null; toast('Einstellungen gespeichert'); renderMeters(); if(cfg.location) refreshWeather(true); }catch(e){ toast('Fehler: '+(e.message||e.code)); } });
+}
+function collectConfig(){
+  const base=JSON.parse(JSON.stringify(meters()));
+  $$('#tab-meters [data-mi]').forEach(card=>{
+    const m=base[Number(card.dataset.mi)]; const g=f=>$(`[data-f="${f}"]`,card);
+    m.active=g('active').checked; m.inTotal=g('inTotal').checked; m.weather=g('weather').checked; m.name=g('name').value.trim()||m.name; m.unit=g('unit').value.trim()||m.unit;
+    m.decimals=Math.max(0,Math.min(4,Number(g('decimals').value)||0)); m.ids=g('ids').value.split(',').map(s=>s.trim()).filter(Boolean); m.hint=g('hint').value.trim();
+    const co=g('controlOf').value; if(co) m.controlOf=co; else delete m.controlOf;
+    const tol=parseNum(g('tolerance').value), tpd=parseNum(g('tolPerDay').value);
+    if(tol!=null) m.tolerance=tol; else delete m.tolerance;
+    if(tpd) m.tolPerDay=tpd; else delete m.tolPerDay;
+    if(g('zz')){ const zz=parseNum(g('zz').value), bw=parseNum(g('bw').value); if(zz&&bw) m.factors={zz,bw}; else delete m.factors; const ou=g('outUnit').value.trim(); if(ou) m.outUnit=ou; else delete m.outUnit; }
+    m.prices=$$('.prow',card).map(row=>({from:$('[data-pf]',row).value, price:parseNum($('[data-pp]',row).value)??0})).filter(p=>p.from);
+  });
+  return {meters:base, location: state.geoDraft || state.cfg?.location || null, updated:Date.now()};
+}
+
+/* ---------- Start ---------- */
+renderAll();
+loadState();
+</script>
+</body>
+</html>

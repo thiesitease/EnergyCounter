@@ -1,0 +1,23 @@
+# ---------------------------------------------------------------------------
+# Dieses Repository ist öffentlich. Hier stehen nur Programm und Anleitung.
+# Zugangsdaten und die eigenen Messwerte bleiben draußen.
+# ---------------------------------------------------------------------------
+
+# Zugangsdaten
+deploy.env
+config.php
+php/config.php
+
+# Eigene Messdaten: Ablesungen, Zählerkonfiguration mit Seriennummern und
+# Standort, Wetter-Zwischenspeicher, archivierte Zählerfotos
+/php/data/*
+!/php/data/.htaccess
+!/php/data/*.example.json
+/data/
+/excel/
+
+# Werkzeuge und Betriebssystem
+.claude/settings.local.json
+Thumbs.db
+.DS_Store
+*.tmp
