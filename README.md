@@ -1,0 +1,2 @@
+# EnergyCounter
+Erfassung von Zählerstandsdaten
