@@ -1,0 +1,19 @@
+# Zeilenenden festlegen. Wichtig für die Shell-Skripte: Mit CRLF bricht bash
+# mit "$'\r': command not found" ab.
+* text=auto
+
+*.sh   text eol=lf
+*.php  text eol=lf
+*.py   text eol=lf
+*.html text eol=lf
+*.json text eol=lf
+*.md   text eol=lf
+*.yml  text eol=lf
+.htaccess text eol=lf
+Dockerfile text eol=lf
+
+*.ps1  text eol=crlf
+
+*.xlsx binary
+*.jpg  binary
+*.png  binary
