@@ -24,6 +24,23 @@ Server, als schlichte JSON-Dateien.
 
 Zwei Passwörter: eines zum Bearbeiten, eines nur zum Ansehen.
 
+## Screenshots
+
+![Auswertung am Desktop](docs/screenshots/desktop-dash.png)
+
+<img src="docs/screenshots/mobile-capture.png" alt="Erfassen auf dem Handy" width="300">
+
+| Bereich | Desktop | Handy |
+|---|---|---|
+| Erfassen | [desktop-capture.png](docs/screenshots/desktop-capture.png) | [mobile-capture.png](docs/screenshots/mobile-capture.png) |
+| Auswertung | [desktop-dash.png](docs/screenshots/desktop-dash.png) | [mobile-dash.png](docs/screenshots/mobile-dash.png) |
+| Vergleich | [desktop-compare.png](docs/screenshots/desktop-compare.png) | [mobile-compare.png](docs/screenshots/mobile-compare.png) |
+| Verlauf | [desktop-history.png](docs/screenshots/desktop-history.png) | [mobile-history.png](docs/screenshots/mobile-history.png) |
+| Zähler | [desktop-meters.png](docs/screenshots/desktop-meters.png) | [mobile-meters.png](docs/screenshots/mobile-meters.png) |
+
+Aufgenommen an einer lokalen Installation mit den echten Ablesungen des Autors; die
+Seriennummern der Zähler sind durch Platzhalter ersetzt.
+
 ## Zwei Varianten
 
 | Variante | Dateien | Wofür |
