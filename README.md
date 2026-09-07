@@ -38,8 +38,17 @@ Zwei Passwörter: eines zum Bearbeiten, eines nur zum Ansehen.
 | Verlauf | [desktop-history.png](docs/screenshots/desktop-history.png) | [mobile-history.png](docs/screenshots/mobile-history.png) |
 | Zähler | [desktop-meters.png](docs/screenshots/desktop-meters.png) | [mobile-meters.png](docs/screenshots/mobile-meters.png) |
 
+Die Diagramme der Auswertung am Beispiel Gas:
+
+![Monatsverlauf nach Jahren](docs/screenshots/desktop-gas-months.png)
+
+![Gas gegen Außentemperatur](docs/screenshots/desktop-gas-temperature.png)
+
+![Verbrauch zwischen den Ablesungen](docs/screenshots/desktop-gas-intervals.png)
+
 Aufgenommen an einer lokalen Installation mit den echten Ablesungen des Autors; die
-Seriennummern der Zähler sind durch Platzhalter ersetzt.
+Seriennummern der Zähler sind durch Platzhalter ersetzt, die Außentemperaturen stammen
+von einem Platzhalter-Standort.
 
 ## Zwei Varianten
 
