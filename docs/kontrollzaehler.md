@@ -16,9 +16,10 @@ einmal für die Einspeisung. Der Sinn ist die Kontrolle, ob beide gleich laufen.
 
 ## Folgen im Programm
 
-* **Gerechnet wird nur mit dem Hauptzähler.** Kacheln, Vergleich und Kostensumme nehmen
-  ausschließlich den Zähler des Versorgers. Kontrollzähler erscheinen dort nicht.
-  In der Oberfläche liefert `mainMeters()` die Liste ohne sie.
+* **Gerechnet wird mit dem Hauptzähler.** Kacheln, Vergleich und Kostensumme nehmen den
+  Zähler des Versorgers, Kontrollzähler erscheinen dort nicht. In der Oberfläche liefert
+  `mainMeters()` die Liste ohne sie. Der Kontrollzähler liefert aber den **zeitlichen
+  Verlauf**, siehe unten unter „Verlauf aus dem Kontrollzähler“.
 * **Beim Erfassen wird sofort verglichen.** Stehen beide Werte im Formular, prüft
   `crossCheck()` den Verbrauch seit der letzten Ablesung des Hauptzählers, zu der es auch
   einen Stand des Kontrollzählers gibt.
@@ -45,6 +46,28 @@ Stunden verhindert das. `frv` und `fre` müssen deshalb nicht mehr von Hand abge
 
 Umgesetzt in `nearAt()` und `controlSeries()` in `index.html` und gleichlautend in
 `zb_near_at()` und `zb_control_rows()` in `lib.php`. Beide müssen gleich rechnen.
+
+## Verlauf aus dem Kontrollzähler
+
+Der Zähler der Stadtwerke wird nur ab und zu fotografiert. Der Fronius liefert dagegen
+stündliche Werte. Für jeden frei gewählten Zeitraum rechnet `cumFor()` in `index.html`
+deshalb so:
+
+* **Zwischen zwei Ablesungen des Hauptzählers** wird dessen Verbrauch nach dem Verlauf des
+  Kontrollzählers verteilt statt gleichmäßig. Die Summe zwischen den beiden Ablesungen
+  bleibt genau die des Hauptzählers, also die der Rechnung. Ein Abend mit Sauna bekommt so
+  mehr ab als die Nacht.
+* **Nach der letzten Ablesung** geht es mit dem Zuwachs des Kontrollzählers weiter. Die
+  Kacheln sind damit aktuell, auch wenn das letzte Foto Wochen alt ist.
+* Fehlen Werte des Kontrollzählers in der Nähe (mehr als drei Stunden Abstand, also vor
+  den Stundenwerten vom NAS) oder liegt ein Zählerwechsel dazwischen, bleibt es bei der
+  linearen Interpolation. Die Geschichte seit 2008 bleibt damit unverändert.
+
+Den Zähler der Stadtwerke muss man daher nur noch gelegentlich fotografieren, zum Beispiel
+monatlich oder zum Ablesetermin. Fotos der Fronius-Anzeige braucht es nicht mehr.
+
+Das betrifft nur die Oberfläche. Der Excel-Export rechnet Abschnitte zwischen echten
+Ablesungen und interpoliert nicht.
 
 ## Warum es eine Toleranz je Tag gibt
 

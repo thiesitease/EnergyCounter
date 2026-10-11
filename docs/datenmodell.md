@@ -80,7 +80,9 @@ gleich rechnen, sonst weichen Oberfläche und Excel-Export voneinander ab.
 * Der Verbrauch eines Abschnitts ist die Differenz der kumulierten Stände, multipliziert
   mit dem Faktor des Zählers.
 * Für einen frei gewählten Zeitraum wird zwischen den benachbarten Ablesungen **linear
-  interpoliert** (`cumAt`). Liegt der Zeitraum teilweise außerhalb der vorhandenen Daten,
+  interpoliert** (`cumAt`). Hat der Zähler einen Kontrollzähler mit Stundenwerten, folgt
+  die Verteilung dessen Verlauf und reicht über die letzte Ablesung hinaus (`cumFor`,
+  siehe [kontrollzaehler.md](kontrollzaehler.md)). Liegt der Zeitraum teilweise außerhalb der vorhandenen Daten,
   wird er gekürzt und die Oberfläche schreibt „gekürzt“ dazu.
 * Kosten werden zeitanteilig über die Preisstufen verteilt (`costBetween`), ein Preiswechsel
   mitten im Zeitraum wird also anteilig berücksichtigt.

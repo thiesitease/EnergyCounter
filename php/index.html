@@ -293,8 +293,8 @@ const state = {
   geoResults:[], geoDraft:null,
   histMode:'week', histLimit:500, histOpen:new Set(),
 };
-const cache = {series:{}, idx:{}};
-function invalidate(){ cache.series={}; cache.idx={}; }
+const cache = {series:{}, idx:{}, chg:{}};
+function invalidate(){ cache.series={}; cache.idx={}; cache.chg={}; }
 function meters(){ return (state.cfg?.meters || DEFAULT_METERS); }
 function activeMeters(){ return meters().filter(m=>m.active!==false); }
 function meterByKey(k){ return meters().find(m=>m.key===k); }
@@ -436,12 +436,42 @@ function tempStats(a, b){
   if(!n||n<days*0.7) return null;
   return {mean:sum/n, gtz, n};
 }
+/* Hauptzähler mit Kontrollzähler (Strom der Stadtwerke, Fronius daneben): Zwischen zwei
+   Ablesungen wird der Verbrauch nach dem Verlauf des Kontrollzählers verteilt statt
+   gleichmäßig, und nach der letzten Ablesung geht es mit dessen Zuwachs weiter. Die
+   Summe zwischen zwei Ablesungen bleibt die des Hauptzählers, also die der Rechnung.
+   Fehlen Stundenwerte in der Nähe, bleibt es bei der linearen Interpolation. */
+function chgPts(key){ return cache.chg[key] ??= series(key).filter(p=>p.chg); }
+function seriesEnd(key){
+  const pts=series(key); const last=pts[pts.length-1]; const c=controlFor(key);
+  if(!c) return last.t;
+  const pc=series(c.key); const lc=pc[pc.length-1];
+  if(!lc || lc.t<=last.t || nearAt(pc, last.t, NEAR)==null || chgBetween(chgPts(c.key), last.t, lc.t)) return last.t;
+  return lc.t;
+}
+function cumFor(key, t){
+  const pts=series(key); if(!pts.length) return null;
+  const c=controlFor(key); const pc=c?series(c.key):[];
+  const last=pts[pts.length-1];
+  if(t>last.t){
+    if(!pc.length || t>seriesEnd(key)) return null;
+    const cl=nearAt(pc, last.t, NEAR), ct=cumAt(pc, t);
+    return cl==null||ct==null ? null : last.cum+(ct-cl);
+  }
+  const lin=cumAt(pts, t); if(lin==null || !pc.length) return lin;
+  let lo=0, hi=pts.length-1;
+  while(hi-lo>1){ const mid=(lo+hi)>>1; if(pts[mid].t<=t) lo=mid; else hi=mid; }
+  const a=pts[lo], b=pts[hi]; if(a.t===t||b.t===t) return lin;
+  const ca=nearAt(pc, a.t, NEAR), cb=nearAt(pc, b.t, NEAR), ct=nearAt(pc, t, NEAR);
+  if(ca==null || cb==null || ct==null || cb-ca<=0 || chgBetween(chgPts(c.key), a.t, b.t)) return lin;
+  return a.cum+(b.cum-a.cum)*(ct-ca)/(cb-ca);
+}
 function periodStats(key, a, b){
   const m=meterByKey(key); const pts=series(key);
   if(!pts.length||b<=a) return null;
-  const a1=Math.max(a, pts[0].t), b1=Math.min(b, pts[pts.length-1].t);
+  const a1=Math.max(a, pts[0].t), b1=Math.min(b, seriesEnd(key));
   if(b1<=a1) return null;
-  const ca=cumAt(pts,a1), cb=cumAt(pts,b1); if(ca==null||cb==null) return null;
+  const ca=cumFor(key,a1), cb=cumFor(key,b1); if(ca==null||cb==null) return null;
   const days=(b1-a1)/DAY; if(days<0.5) return null;
   const amount=cb-ca, rate=amount/days;
   const cost=costBetween(m,a1,b1,amount);
@@ -871,7 +901,7 @@ function renderDash(){
       <div class="row between"><h2>Aktueller Verbrauch</h2>
         <div class="chips" id="rangechips">${[[30,'30 Tage'],[90,'90 Tage'],[365,'12 Monate']].map(([d,l])=>`<button class="chip" aria-pressed="${R===d}" data-range="${d}">${l}</button>`).join('')}</div></div>
       ${weatherBanner()}
-      <div class="tiny">Zeitraum ${fmtDate(a)} – ${fmtDate(b)}. Zwischen zwei Ablesungen wird linear interpoliert. Vorjahresvergleich: gleicher Zeitraum ein Jahr früher. Gradtage nach 20/15-Methode (Heiztag, wenn Tagesmittel unter 15 °C).</div>
+      <div class="tiny">Zeitraum ${fmtDate(a)} – ${fmtDate(b)}. Zwischen zwei Ablesungen wird linear interpoliert, beim Strom nach dem Stundenverlauf des Fronius, der auch die Zeit seit der letzten Ablesung ergänzt. Vorjahresvergleich: gleicher Zeitraum ein Jahr früher. Gradtage nach 20/15-Methode (Heiztag, wenn Tagesmittel unter 15 °C).</div>
       <div class="tiles">${totalTile}${tiles.join('')}</div>
     </div>
     ${controlCard()}
