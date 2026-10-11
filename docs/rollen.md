@@ -39,6 +39,17 @@ oben rechts das Kennzeichen „nur Lesen“.
 Das Nachladen der Wetterdaten ist dem Bearbeiten-Zugang vorbehalten, weil es auf den Server
 schreibt. Ein Lesezugang sieht die zuletzt geholten Temperaturen.
 
+## Dritter Zugang: Token für das NAS
+
+Das NAS im Haus schickt stündlich die Zählerstände des Fronius an
+`api.php?p=fronius-push`. Es meldet sich nicht mit einem Passwort an, sondern mit
+`'push_token'` aus `config.php` in der Kopfzeile `X-Push-Token`. Der Token erlaubt nur
+diese eine Aktion: keine Ablesungen lesen, nichts löschen, keine Einstellungen.
+
+Der Endpunkt steht in `api.php` **vor** der Rollenprüfung und beendet die Anfrage immer
+selbst. In `$schreibend` ist er nur zur Sicherheit eingetragen. Ohne gesetzten Token ist
+er abgeschaltet. Einrichtung in [fronius-nas.md](fronius-nas.md).
+
 ## Cookie
 
 Der Wert für die Bearbeiten-Rolle wird unverändert aus `hash_hmac('sha256', 'zb-auth-v1',

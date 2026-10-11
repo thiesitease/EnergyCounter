@@ -37,6 +37,7 @@ if ($p === 'health') {
     $limitBefore = (int) ini_get('max_execution_time');
     @set_time_limit(180);
     $limitAfter = (int) ini_get('max_execution_time');
+    $all        = zb_readings();
     zb_out([
         'ok'         => true,
         'php'        => PHP_VERSION,
@@ -48,7 +49,9 @@ if ($p === 'health') {
         'curl'       => function_exists('curl_init'),
         'zlib'       => function_exists('gzdeflate'),
         'model'      => zb_model(),
-        'readings'   => count(zb_readings()),
+        'readings'   => count($all),
+        'push_token' => zb_push_token() !== '',
+        'fronius_last' => zb_fronius_last($all),
         'https'      => zb_is_https(),
         'photos'     => zb_photo_usage(),
         'limits'     => [
@@ -83,6 +86,61 @@ if ($p === 'login') {
     zb_out(['ok' => false], 401);
 }
 
+/* Das NAS im Haus schickt stündlich die Antworten des Fronius-Wechselrichters, eine
+   einzelne oder eine Liste nachgeholter Stunden. Es meldet sich mit einem eigenen
+   Token aus config.php an, der nur diese eine Aktion darf. So muss das
+   Bearbeiten-Passwort nicht auf dem NAS liegen. */
+if ($p === 'fronius-push') {
+    if ($method !== 'POST') {
+        zb_out(['error' => 'method'], 405);
+    }
+    $token = zb_push_token();
+    $given = zb_request_header('X-Push-Token');
+    if ($token === '' || $given === '' || !hash_equals($token, $given)) {
+        usleep(400000);
+        zb_out(['error' => 'unauthorized', 'message' => 'Push-Token fehlt oder stimmt nicht.'], 401);
+    }
+    if (!zb_writable()) {
+        zb_out(['error' => 'readonly', 'message' => 'Das Datenverzeichnis ist nicht beschreibbar.'], 500);
+    }
+    $in    = zb_input();
+    $items = isset($in['Body']) ? [$in] : (isset($in[0]) ? array_values($in) : []);
+    if (!$items || count($items) > 1000) {
+        zb_out(['error' => 'invalid', 'message' => 'Erwartet wird eine Fronius-Antwort oder eine Liste davon.'], 400);
+    }
+    $docs     = [];
+    $rejected = [];
+    foreach ($items as $i => $resp) {
+        $doc = zb_fronius_reading($resp);
+        if (is_string($doc)) {
+            $rejected[] = ['index' => $i, 'reason' => $doc];
+        } else {
+            $docs[$doc['id']] = $doc;
+        }
+    }
+    if ($docs) {
+        $ok = zb_update_readings(function ($rs) use ($docs) {
+            $new = [];
+            foreach ($rs as $r) {
+                if (!isset($r['id']) || !isset($docs[$r['id']])) {
+                    $new[] = $r;
+                }
+            }
+            foreach ($docs as $doc) {
+                $new[] = $doc;
+            }
+            usort($new, function ($a, $b) { return $a['t'] <=> $b['t']; });
+            return $new;
+        });
+        if (!$ok) {
+            zb_out(['error' => 'write_failed', 'message' => 'Speichern fehlgeschlagen.'], 500);
+        }
+    }
+    $last = $docs ? end($docs) : null;
+    zb_out(['ok' => true, 'saved' => count($docs), 'rejected' => $rejected,
+            'last' => $last ? ['t' => $last['t'], 'v' => $last['v']] : null]);
+}
+
 /* ---------------------------------------------------------------- ab hier mit Anmeldung */
 
 $role = zb_role();
@@ -96,8 +154,9 @@ if ($role === null) {
 }
 
 // Alles, was Daten verändert, ist dem Bearbeiten-Passwort vorbehalten.
+// 'fronius-push' wird schon oben mit eigenem Token erledigt und steht nur zur Sicherheit hier.
 $schreibend = ['save-reading', 'delete-reading', 'save-config', 'save-photo', 'delete-photo',
-               'recognize', 'weather-step'];
+               'recognize', 'weather-step', 'fronius-push'];
 if (in_array($p, $schreibend, true) && $role !== 'edit') {
     zb_out(['error' => 'readonly_mode',
             'message' => 'Dieser Zugang darf nur ansehen, nicht ändern.'], 403);
@@ -210,16 +269,18 @@ switch ($p) {
                 $doc[$k] = (int) $in[$k];
             }
         }
-        $rs  = zb_load('readings.json', []);
-        $new = [];
-        foreach ($rs as $r) {
-            if (!isset($r['id']) || $r['id'] !== $id) {
-                $new[] = $r;
+        $ok = zb_update_readings(function ($rs) use ($id, $doc) {
+            $new = [];
+            foreach ($rs as $r) {
+                if (!isset($r['id']) || $r['id'] !== $id) {
+                    $new[] = $r;
+                }
             }
-        }
-        $new[] = $doc;
-        usort($new, function ($a, $b) { return $a['t'] <=> $b['t']; });
-        if (!zb_save('readings.json', $new)) {
+            $new[] = $doc;
+            usort($new, function ($a, $b) { return $a['t'] <=> $b['t']; });
+            return $new;
+        });
+        if (!$ok) {
             zb_out(['error' => 'write_failed', 'message' => 'Speichern fehlgeschlagen.'], 500);
         }
         zb_out(['ok' => true]);
@@ -234,14 +295,16 @@ switch ($p) {
         if (!preg_match('/^[A-Za-z0-9_\-]{1,64}$/', $id)) {
             zb_out(['error' => 'invalid_id'], 400);
         }
-        $rs  = zb_load('readings.json', []);
-        $new = [];
-        foreach ($rs as $r) {
-            if (!isset($r['id']) || $r['id'] !== $id) {
-                $new[] = $r;
+        $ok = zb_update_readings(function ($rs) use ($id) {
+            $new = [];
+            foreach ($rs as $r) {
+                if (!isset($r['id']) || $r['id'] !== $id) {
+                    $new[] = $r;
+                }
             }
-        }
-        if (!zb_save('readings.json', $new)) {
+            return $new;
+        });
+        if (!$ok) {
             zb_out(['error' => 'write_failed'], 500);
         }
         zb_delete_photos($id);
@@ -292,19 +355,20 @@ switch ($p) {
             zb_out(['error' => 'invalid_id'], 400);
         }
         zb_delete_photo($id, $file);
-        $rs = zb_load('readings.json', []);
-        foreach ($rs as &$r) {
-            if (isset($r['id']) && $r['id'] === $id && !empty($r['ph'])) {
-                $r['ph'] = array_values(array_filter($r['ph'], function ($e) use ($file) {
-                    return !isset($e['f']) || $e['f'] !== $file;
-                }));
-                if (!$r['ph']) {
-                    unset($r['ph']);
+        zb_update_readings(function ($rs) use ($id, $file) {
+            foreach ($rs as &$r) {
+                if (isset($r['id']) && $r['id'] === $id && !empty($r['ph'])) {
+                    $r['ph'] = array_values(array_filter($r['ph'], function ($e) use ($file) {
+                        return !isset($e['f']) || $e['f'] !== $file;
+                    }));
+                    if (!$r['ph']) {
+                        unset($r['ph']);
+                    }
                 }
             }
-        }
-        unset($r);
-        zb_save('readings.json', $rs);
+            unset($r);
+            return $rs;
+        });
         zb_out(['ok' => true]);
         break;
 

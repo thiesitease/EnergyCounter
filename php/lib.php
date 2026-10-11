@@ -124,6 +124,26 @@ function zb_save($name, $data)
     return true;
 }
 
+/**
+ * Ablesungen unter Sperre lesen, ändern und zurückschreiben. Das NAS schreibt jede
+ * Stunde; ohne Sperre könnte eine gleichzeitige Eingabe im Browser verloren gehen.
+ * $fn bekommt die Liste und gibt die neue Liste zurück.
+ */
+function zb_update_readings($fn)
+{
+    $lock = @fopen(zb_path('readings.lock'), 'c');
+    if ($lock) {
+        flock($lock, LOCK_EX);
+    }
+    $rs = $fn(zb_load('readings.json', []));
+    $ok = is_array($rs) && zb_save('readings.json', $rs);
+    if ($lock) {
+        flock($lock, LOCK_UN);
+        fclose($lock);
+    }
+    return $ok;
+}
+
 function zb_readings()
 {
     $rs = zb_load('readings.json', []);
@@ -758,33 +778,168 @@ function zb_tolerance($m, $days)
         + (isset($m['tolPerDay']) ? (float) $m['tolPerDay'] : 0) * $days;
 }
 
+/** Höchster Abstand zu den Nachbarwerten, bis zu dem ein Kontrollzähler interpoliert wird. */
+const ZB_NEAR_MS = 3 * 3600 * 1000;
+
+/**
+ * Wert einer Reihe zum Zeitpunkt $t: exakt, wenn dort ein Punkt liegt, sonst linear
+ * zwischen den Nachbarn – aber nur, wenn beide höchstens $gap entfernt sind und
+ * dazwischen kein Zählerwechsel liegt. Entspricht nearAt() in index.html.
+ */
+function zb_near_at($pts, $t, $gap, $field = 'cum')
+{
+    $n = count($pts);
+    if (!$n || $t < $pts[0]['t'] || $t > $pts[$n - 1]['t']) {
+        return null;
+    }
+    $lo = 0;
+    $hi = $n - 1;
+    while ($hi - $lo > 1) {
+        $mid = ($lo + $hi) >> 1;
+        if ($pts[$mid]['t'] <= $t) {
+            $lo = $mid;
+        } else {
+            $hi = $mid;
+        }
+    }
+    if ($pts[$lo]['t'] == $t) {
+        return $pts[$lo][$field];
+    }
+    if ($pts[$hi]['t'] == $t) {
+        return $pts[$hi][$field];
+    }
+    $a = $pts[$lo];
+    $b = $pts[$hi];
+    if ($t - $a['t'] > $gap || $b['t'] - $t > $gap || $b['chg']) {
+        return null;
+    }
+    return $a[$field] + ($b[$field] - $a[$field]) * ($t - $a['t']) / ($b['t'] - $a['t']);
+}
+
+/** Liegt einer der Zählerwechsel $chgPts im Zeitraum (t0, t1]? */
+function zb_chg_between($chgPts, $t0, $t1)
+{
+    foreach ($chgPts as $p) {
+        if ($p['t'] > $t0 && $p['t'] <= $t1) {
+            return true;
+        }
+    }
+    return false;
+}
+
 /**
  * Abgleich eines Kontrollzählers mit seinem Hauptzähler: Verbrauch je Abschnitt
- * auf beiden Zählern, nur aus Ablesungen, in denen beide Werte stehen.
+ * zwischen zwei Ablesungen des Hauptzählers. Der Stand des Kontrollzählers kommt aus
+ * derselben Ablesung oder, seit das NAS stündlich schreibt, aus den Stundenwerten
+ * davor und danach. Entspricht controlSeries() in index.html.
  */
 function zb_control_rows($readings, $c, $m)
 {
+    $pc   = zb_series($readings, $c);
+    $pm   = zb_series($readings, $m);
+    $isChg = function ($p) { return $p['chg']; };
+    $chgC = array_filter($pc, $isChg);
+    $chgM = array_filter($pm, $isChg);
     $out  = [];
     $prev = null;
-    foreach ($readings as $r) {
-        $vc = isset($r['v'][$c['key']]) ? $r['v'][$c['key']] : null;
-        $vm = isset($r['v'][$m['key']]) ? $r['v'][$m['key']] : null;
-        if (!is_numeric($vc) || !is_numeric($vm)) {
+    foreach ($pm as $p) {
+        $cc = zb_near_at($pc, $p['t'], ZB_NEAR_MS);
+        if ($cc === null) {
             continue;
         }
-        $chg = !empty($r['chg'][$c['key']]) || !empty($r['chg'][$m['key']]);
-        if ($prev !== null && !$chg) {
-            $days = ($r['t'] - $prev['t']) / ZB_DAY_MS;
-            if ($days > 0.02) {
-                $dc    = ($vc - $prev['vc']) * zb_factor($c);
-                $dm    = ($vm - $prev['vm']) * zb_factor($m);
-                $out[] = ['t0' => $prev['t'], 't1' => $r['t'], 'days' => $days, 'dc' => $dc, 'dm' => $dm,
+        if ($prev !== null) {
+            $days = ($p['t'] - $prev['t']) / ZB_DAY_MS;
+            if ($days > 0.02 && !zb_chg_between($chgM, $prev['t'], $p['t'])
+                && !zb_chg_between($chgC, $prev['t'], $p['t'])) {
+                $dc    = $cc - $prev['cc'];
+                $dm    = $p['cum'] - $prev['cm'];
+                $out[] = ['t0' => $prev['t'], 't1' => $p['t'], 'days' => $days, 'dc' => $dc, 'dm' => $dm,
                           'diff' => $dc - $dm, 'tol' => zb_tolerance($c, $days)];
             }
         }
-        $prev = ['t' => $r['t'], 'vc' => $vc, 'vm' => $vm];
+        $prev = ['t' => $p['t'], 'cc' => $cc, 'cm' => $p['cum']];
     }
     return $out;
+}
+
+/* ------------------------------------------------------------------ Fronius vom NAS */
+
+/** Token, mit dem das NAS Zählerstände schicken darf. Leer = Endpunkt aus. */
+function zb_push_token()
+{
+    return (string) zb_cfg('push_token', '');
+}
+
+/**
+ * Welches Register des Fronius Smart Meter in welchen Zähler geht. Über
+ * 'fronius_map' in config.php änderbar. Der Fronius liefert Wh, gespeichert wird kWh.
+ */
+function zb_fronius_map()
+{
+    $map = zb_cfg('fronius_map', null);
+    return is_array($map) && $map ? $map
+        : ['frv' => 'EnergyReal_WAC_Sum_Consumed', 'fre' => 'EnergyReal_WAC_Sum_Produced'];
+}
+
+/**
+ * Eine Antwort von GetMeterRealtimeData.cgi in eine Ablesung übersetzen.
+ * Gibt das Dokument zurück oder einen Text, warum es nicht geht.
+ */
+function zb_fronius_reading($resp)
+{
+    if (!is_array($resp) || !isset($resp['Body']['Data']) || !is_array($resp['Body']['Data'])) {
+        return 'keine Antwort von GetMeterRealtimeData';
+    }
+    if (isset($resp['Head']['Status']['Code']) && (int) $resp['Head']['Status']['Code'] !== 0) {
+        return 'Fronius meldet Fehler ' . (int) $resp['Head']['Status']['Code'];
+    }
+    $data = $resp['Body']['Data'];
+    // Scope=Device liefert die Felder direkt, Scope=System eine Liste der Zähler.
+    // Gesucht ist der Zähler am Netzanschluss (Meter_Location_Current 0).
+    $meter = isset($data['TimeStamp']) ? $data : null;
+    if ($meter === null) {
+        foreach ($data as $d) {
+            if (!is_array($d)) {
+                continue;
+            }
+            if ($meter === null || (isset($d['Meter_Location_Current']) && (float) $d['Meter_Location_Current'] == 0)) {
+                $meter = $d;
+            }
+        }
+    }
+    if ($meter === null) {
+        return 'kein Zähler in der Antwort';
+    }
+    $ts = isset($meter['TimeStamp']) && is_numeric($meter['TimeStamp']) ? (int) $meter['TimeStamp'] : 0;
+    if ($ts <= 0 && isset($resp['Head']['Timestamp'])) {
+        $ts = (int) strtotime((string) $resp['Head']['Timestamp']);
+    }
+    if ($ts < 1577836800 || $ts > time() + 3600) {
+        return 'Zeitstempel unbrauchbar';
+    }
+    $v = [];
+    foreach (zb_fronius_map() as $key => $field) {
+        if (isset($meter[$field]) && is_numeric($meter[$field]) && $meter[$field] > 0) {
+            $v[$key] = round($meter[$field] / 1000, 3);
+        }
+    }
+    if (!$v) {
+        return 'keine Zählerstände in der Antwort';
+    }
+    // Die ID hängt an der Stunde: Schickt das NAS dieselbe Stunde noch einmal,
+    // ersetzt sie den Eintrag, statt ihn zu verdoppeln.
+    return ['id' => 'fronius-' . gmdate('YmdH', $ts), 't' => $ts * 1000, 'v' => $v, 'src' => 'fronius'];
+}
+
+/** Zeitpunkt der letzten Ablesung vom Fronius in ms, für die Statusanzeige. */
+function zb_fronius_last($readings)
+{
+    for ($i = count($readings) - 1; $i >= 0; $i--) {
+        if (isset($readings[$i]['src']) && $readings[$i]['src'] === 'fronius') {
+            return $readings[$i]['t'];
+        }
+    }
+    return null;
 }
 
 /** Mittlere Außentemperatur und Gradtagzahl (20/15) für einen Zeitraum in ms. */

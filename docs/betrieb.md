@@ -20,7 +20,7 @@ dort die PHP-Fassung. Sie kommt ohne Dauerprozess aus:
 |---|---|
 | Keine Hintergrundprozesse | PHP läuft nur während eines Seitenaufrufs. Auch das Nachladen der Wetterdaten passiert in kurzen Einzelschritten, die der Browser nacheinander anstößt. |
 | Nichts lauscht auf einem Port | Die Seite liefert der Webserver des Anbieters aus. |
-| Kein eigener Cronjob | Wird nicht gebraucht. Fehlende Wettertage holt die App beim Öffnen nach. |
+| Kein eigener Cronjob | Wird nicht gebraucht. Fehlende Wettertage holt die App beim Öffnen nach. Die stündlichen Fronius-Werte schickt das NAS im Haus ([fronius-nas.md](fronius-nas.md)). |
 | Keine Container | Die Docker-Dateien gehören zur Python-Variante für den eigenen Server. |
 | Keine Rechte-Eskalation | Auf dem Server wird nichts installiert. |
 
@@ -70,6 +70,7 @@ data/readings.json    entsteht bei der ersten Ablesung
        'api_key'           => 'sk-ant-...',        // optional, für die Foto-Erkennung
        'model'             => 'claude-opus-5',
        'effort'            => 'low',
+       'push_token'        => '',                  // optional, für das NAS, siehe fronius-nas.md
        'data_dir'          => __DIR__ . '/data',
    ];
    ```

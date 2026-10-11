@@ -58,6 +58,10 @@ SSH-Sitzung vom Server aus fahren, dort ist die Seite in Millisekunden erreichba
 | Windows | `bash` ist nicht im PATH. Für den Benutzer PowerShell-Skripte anbieten. |
 | Excel-Export | Datumszellen als Seriennummer schreiben, sonst kann Excel nicht rechnen. |
 | Zählerwechsel | `series()` in JavaScript und `zb_series()` in PHP müssen gleich rechnen. |
+| Zählerabgleich | Gilt genauso für `nearAt()`/`controlSeries()` und `zb_near_at()`/`zb_control_rows()`. |
+| PHP über SSH | Auf der Kommandozeile des Hosters bricht PCRE bei verschachtelten Mustern mit „Internal error“ ab, auch mit `pcre.jit=0`. In Skripten, die per SSH laufen, zeilenweise mit `strpos` arbeiten. |
+| PHP über SSH | `php -l < datei` prüft die Syntax über die Standardeingabe, ohne etwas auf dem Server abzulegen. |
+| Dateien auf dem Server | Sie liegen dort mit CRLF, im Repository mit LF. Vor einem Vergleich `tr -d '\r'` anwenden. |
 
 ## Was vor einem Commit zu prüfen ist
 

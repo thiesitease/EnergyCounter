@@ -19,6 +19,10 @@ Server, als schlichte JSON-Dateien.
 * **Vergleich** – zwei frei wählbare Zeiträume, mit Vorlagen für 30 und 90 Tage, Jahr bis
   heute, zwölf Monate, Vorjahr und Heizperiode. Für Heizzähler auch witterungsbereinigt.
 * **Verlauf** – alle Ablesungen mit den archivierten Fotos, bearbeitbar, mit Excel-Export.
+  Automatische Stundenwerte lassen sich je Tag, Woche oder Monat zusammenfassen.
+* **Fronius über das NAS** – ein kleines Skript auf der Synology holt stündlich die Stände
+  des Fronius Smart Meter und schickt sie an die Website, siehe
+  [docs/fronius-nas.md](docs/fronius-nas.md).
 * **Zähler** – Einheiten, Umrechnungsfaktoren, Seriennummern, Preise mit Gültigkeitsdatum
   (auch negativ für Einspeisevergütung), Kontrollzähler, Standort für die Wetterdaten.
 

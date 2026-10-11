@@ -173,6 +173,10 @@ td.n{font-family:var(--font-num);font-variant-numeric:tabular-nums}
 .hrow .vals b{font-family:var(--font-num);font-weight:500}
 .hrow .vals .chgflag{color:var(--warn-text);font-weight:600}
 .hrow .note{grid-column:1/-1;font-size:12.5px;color:var(--ink-2);font-style:italic}
+.hrow .vals .inc{color:var(--ink-3)}
+.hgroup .hd::before{content:'▸ ';color:var(--ink-3)}
+.hgroup.open .hd::before{content:'▾ '}
+.hsub{padding-left:14px;border-left:3px solid var(--line-strong);margin-left:4px}
 .thumbs{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
 .thumb{width:56px;height:42px;border-radius:6px;object-fit:cover;border:1px solid var(--line-strong);background:var(--surface-2);cursor:zoom-in;display:block}
 .thumb:hover{border-color:var(--accent)}
@@ -287,9 +291,10 @@ const state = {
   range:30, chartMeter:'gas', yearsN:4, longRange:'3y',
   cmp:{preset:'l30', a0:null, a1:null, b0:null, b1:null},
   geoResults:[], geoDraft:null,
+  histMode:'week', histLimit:500, histOpen:new Set(),
 };
-const cache = {series:{}};
-function invalidate(){ cache.series={}; }
+const cache = {series:{}, idx:{}};
+function invalidate(){ cache.series={}; cache.idx={}; }
 function meters(){ return (state.cfg?.meters || DEFAULT_METERS); }
 function activeMeters(){ return meters().filter(m=>m.active!==false); }
 function meterByKey(k){ return meters().find(m=>m.key===k); }
@@ -467,24 +472,41 @@ document.addEventListener('click', e=>{ const a=e.target.closest('[data-goto]');
 /* ===== Erfassen ===== */
 function lastPoint(key){ const p=series(key); return p.length?p[p.length-1]:null; }
 function typicalRate(key, t){ const s=periodStats(key, t-365*DAY, t); return s?s.rate:null; }
-/* letzte Ablesung, in der beide Zähler stehen – nur dann sind die Differenzen vergleichbar */
-function lastBoth(k1, k2){
-  for(let i=state.readings.length-1;i>=0;i--){ const r=state.readings[i];
-    if(typeof r.v?.[k1]==='number' && typeof r.v?.[k2]==='number') return r; }
-  return null;
+/* Wert einer Reihe zum Zeitpunkt t: exakt, wenn dort ein Punkt liegt, sonst linear
+   zwischen den Nachbarn – aber nur, wenn beide höchstens gap entfernt sind und
+   dazwischen kein Zählerwechsel liegt. Entspricht zb_near_at() in lib.php. */
+const NEAR = 3*3600000;
+function nearAt(pts, t, gap, f='cum'){
+  const n=pts.length; if(!n||t<pts[0].t||t>pts[n-1].t) return null;
+  let lo=0, hi=n-1;
+  while(hi-lo>1){ const mid=(lo+hi)>>1; if(pts[mid].t<=t) lo=mid; else hi=mid; }
+  if(pts[lo].t===t) return pts[lo][f];
+  if(pts[hi].t===t) return pts[hi][f];
+  const a=pts[lo], b=pts[hi];
+  if(t-a.t>gap || b.t-t>gap || b.chg) return null;
+  return a[f]+(b[f]-a[f])*(t-a.t)/(b.t-a.t);
 }
+function chgBetween(chgPts, t0, t1){ return chgPts.some(p=>p.t>t0 && p.t<=t1); }
 /* Abgleich eines Kontrollzählers mit seinem Hauptzähler: der Verbrauch seit der
-   letzten gemeinsamen Ablesung muss auf beiden gleich sein. */
+   letzten Ablesung des Hauptzählers muss auf beiden gleich sein. Den Stand des
+   Kontrollzählers zu diesem Zeitpunkt liefern die Stundenwerte vom NAS. */
 function crossCheck(ctrlKey, values, t, chg){
   const c=meterByKey(ctrlKey); if(!isControl(c)) return null;
   const m=meterByKey(c.controlOf); if(!m) return null;
   const vc=values[ctrlKey], vm=values[m.key];
   if(vc==null||vm==null) return null;
   if(chg && (chg[ctrlKey]||chg[m.key])) return null;
-  const base=lastBoth(ctrlKey, m.key); if(!base || t<=base.t) return null;
-  if(state.readings.some(r=>r.t>base.t && (r.chg?.[ctrlKey]||r.chg?.[m.key]))) return null;
-  const dc=(vc-base.v[ctrlKey])*factorOf(c);
-  const dm=(vm-base.v[m.key])*factorOf(m);
+  const pc=series(ctrlKey), pm=series(m.key);
+  let base=null;
+  for(let i=pm.length-1;i>=0 && !base;i--){
+    if(pm[i].t>=t) continue;
+    const rc=nearAt(pc, pm[i].t, NEAR, 'raw');
+    if(rc!=null) base={t:pm[i].t, vc:rc, vm:pm[i].raw};
+  }
+  if(!base) return null;
+  if(chgBetween(pc.filter(p=>p.chg), base.t, Infinity) || chgBetween(pm.filter(p=>p.chg), base.t, Infinity)) return null;
+  const dc=(vc-base.vc)*factorOf(c);
+  const dm=(vm-base.vm)*factorOf(m);
   const days=(t-base.t)/DAY;
   const tol=toleranceFor(c, days);
   return {diff:dc-dm, tol, dc, dm, days, from:base.t, ok:Math.abs(dc-dm)<=tol, main:m, ctrl:c};
@@ -882,19 +904,24 @@ function renderDash(){
   if($('#chart-scatter')) drawScatter($('#chart-scatter'), cm);
   drawLongChart($('#chart-long'), cm);
 }
-/* Abgleich: Verbrauch je Abschnitt auf Kontrollzähler und Hauptzähler */
+/* Abgleich: Verbrauch je Abschnitt zwischen zwei Ablesungen des Hauptzählers. Der
+   Stand des Kontrollzählers kommt aus derselben Ablesung oder aus den Stundenwerten
+   davor und danach. Entspricht zb_control_rows() in lib.php. */
 function controlSeries(c){
   const m=meterByKey(c.controlOf); if(!m) return [];
+  const pc=series(c.key), pm=series(m.key);
+  const chgC=pc.filter(p=>p.chg), chgM=pm.filter(p=>p.chg);
   const out=[]; let prev=null;
-  for(const r of state.readings){
-    const vc=r.v?.[c.key], vm=r.v?.[m.key];
-    if(typeof vc!=='number'||typeof vm!=='number') continue;
-    const chg=!!(r.chg?.[c.key]||r.chg?.[m.key]);
-    if(prev && !chg){
-      const dc=(vc-prev.vc)*factorOf(c), dm=(vm-prev.vm)*factorOf(m), days=(r.t-prev.t)/DAY;
-      if(days>0.02) out.push({t0:prev.t, t1:r.t, days, dc, dm, diff:dc-dm, tol:toleranceFor(c,days)});
+  for(const p of pm){
+    const cc=nearAt(pc, p.t, NEAR); if(cc==null) continue;
+    if(prev){
+      const days=(p.t-prev.t)/DAY;
+      if(days>0.02 && !chgBetween(chgM, prev.t, p.t) && !chgBetween(chgC, prev.t, p.t)){
+        const dc=cc-prev.cc, dm=p.cum-prev.cm;
+        out.push({t0:prev.t, t1:p.t, days, dc, dm, diff:dc-dm, tol:toleranceFor(c,days)});
+      }
     }
-    prev={t:r.t, vc, vm};
+    prev={t:p.t, cc, cm:p.cum};
   }
   return out;
 }
@@ -904,7 +931,7 @@ function controlCard(){
     const m=meterByKey(c.controlOf);
     const rows=controlSeries(c).slice(-8).reverse();
     if(!rows.length) return `<div class="stack" style="gap:6px"><h3><span class="dot" style="background:${colorVar(c)}"></span>${esc(c.name)} gegen ${esc(m.name)}</h3>
-      <div class="small muted">Noch keine Ablesung, in der beide Zähler stehen.</div></div>`;
+      <div class="small muted">Noch keine zwei Ablesungen von ${esc(m.name)}, zu denen es auch einen Stand von ${esc(c.name)} gibt.</div></div>`;
     const bad=rows.filter(r=>Math.abs(r.diff)>r.tol).length;
     const last=rows[0];
     return `<div class="stack" style="gap:6px">
@@ -1087,22 +1114,94 @@ function renderCompare(){
   $$('[data-p]',el).forEach(i=>i.addEventListener('change',()=>{ const k=i.dataset.p; c[k]=fromDateInput(i.value, k.endsWith('1')); renderCompare(); }));
 }
 
-/* ===== Verlauf ===== */
+/* ===== Verlauf =====
+   Das NAS schreibt jede Stunde eine Ablesung vom Fronius. Damit die Liste lesbar
+   bleibt, fasst der Verlauf diese automatischen Werte je Tag, Woche oder Monat
+   zusammen. Eigene Ablesungen (Foto, von Hand, Import) stehen immer einzeln da.
+   Gerechnet wird überall sonst mit allen Werten. */
+const HIST_MODES = [['all','alle'],['day','täglich'],['week','wöchentlich'],['month','monatlich']];
+const HIST_PAGE = 500;
+function isAuto(r){ return r.src==='fronius'; }
+function srcLabel(r){ return r.src==='photo'?'per Foto':r.src==='import'?'aus Excel':r.src==='fronius'?'vom Fronius':'von Hand'; }
+function periodOf(t, mode){
+  const d=new Date(t); d.setHours(0,0,0,0);
+  if(mode==='week') d.setDate(d.getDate()-(d.getDay()+6)%7);
+  if(mode==='month') d.setDate(1);
+  const start=d.getTime();
+  if(mode==='day') d.setDate(d.getDate()+1); else if(mode==='week') d.setDate(d.getDate()+7); else d.setMonth(d.getMonth()+1);
+  return {key:mode+start, start, end:d.getTime()};
+}
+// Kalenderwoche nach ISO 8601: die Woche gehört zu dem Jahr, in dem ihr Donnerstag liegt
+function isoWeek(t){
+  const d=new Date(t); d.setHours(0,0,0,0); d.setDate(d.getDate()+3-(d.getDay()+6)%7);
+  const w1=new Date(d.getFullYear(),0,4);
+  return {w:1+Math.round(((d-w1)/DAY-3+(w1.getDay()+6)%7)/7), y:d.getFullYear()};
+}
+function periodTitle(p, mode){
+  if(mode==='day') return [new Date(p.start).toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'}), ''];
+  if(mode==='week'){ const k=isoWeek(p.start); const o={day:'2-digit',month:'2-digit'};
+    return [`KW ${k.w}/${k.y}`, `${new Date(p.start).toLocaleDateString('de-DE',o)}–${new Date(p.end-1).toLocaleDateString('de-DE',o)}`]; }
+  const d=new Date(p.start); return [`${MONTHS_LONG[d.getMonth()]} ${d.getFullYear()}`, ''];
+}
+function seriesIndex(key){
+  return cache.idx[key] ??= new Map(series(key).map((p,i)=>[p.id,i]));
+}
+function histRow(r, ms){
+  const vals=ms.filter(m=>typeof r.v?.[m.key]==='number').map(m=>`<span><span class="dot" style="background:${colorVar(m)}"></span>${esc(m.name)} <b>${fmt(r.v[m.key],m.decimals)}</b>${r.chg?.[m.key]?' <span class="chgflag">⟲ neu</span>':''}</span>`).join('');
+  const notes=r.n?Object.entries(r.n).map(([k,v])=>`${esc(meterByKey(k)?.name||k)}: ${esc(v)}`).join(' · '):'';
+  const thumbs=(r.ph||[]).map(e=>`<span class="thumbwrap"><img class="thumb" loading="lazy" src="${photoUrl(r.id,e.f)}" alt="Foto ${esc(meterByKey(e.m)?.name||'')}" data-view="${r.id}|${esc(e.f)}|${esc(e.m||'')}"><span class="cap">${esc((meterByKey(e.m)?.name||'').slice(0,10))}</span></span>`).join('');
+  return `<div class="hrow" data-edit="${r.id}"><div class="hd">${fmtDateTime(r.t)}<small>${srcLabel(r)}</small></div><div class="vals">${vals||'<span class="tiny">keine Werte</span>'}</div>${notes?`<div class="note">${notes}</div>`:''}${thumbs?`<div class="thumbs">${thumbs}</div>`:''}</div>`;
+}
+/* Eine Zeile je Zeitraum: Stand am Ende, Verbrauch im Zeitraum und Ø pro Tag. Der
+   Verbrauch zählt ab dem letzten Stand vor dem Zeitraum, damit nichts verloren geht. */
+function groupRow(g, ms, mode){
+  const open=state.histOpen.has(g.p.key);
+  const vals=ms.map(m=>{
+    const own=g.items.filter(r=>typeof r.v?.[m.key]==='number'); if(!own.length) return '';
+    const pts=series(m.key), idx=seriesIndex(m.key);
+    const i0=idx.get(own[0].id), i1=idx.get(own[own.length-1].id); if(i0==null||i1==null) return '';
+    const last=pts[i1], base=pts[i0>0?i0-1:i0];
+    const amount=last.cum-base.cum, days=(last.t-base.t)/DAY, ou=outUnit(m);
+    const inc=days>0.01?` <span class="inc">+${fmt(amount,1)} ${esc(ou)}${mode!=='day'&&days>=1.5?` · Ø ${fmt(amount/days,1)}/Tag`:''}</span>`:'';
+    return `<span><span class="dot" style="background:${colorVar(m)}"></span>${esc(m.name)} <b>${fmt(last.raw,m.decimals)}</b>${inc}</span>`;
+  }).join('');
+  const [title, sub]=periodTitle(g.p, mode);
+  return `<div class="hrow hgroup${open?' open':''}" data-group="${g.p.key}"><div class="hd">${title}<small>${sub?sub+' · ':''}${fmt(g.items.length,0)} ${g.items.length===1?'Wert':'Werte'} vom Fronius</small></div><div class="vals">${vals}</div></div>`
+    + (open?`<div class="hsub">${g.items.slice().reverse().map(r=>histRow(r,ms)).join('')}</div>`:'');
+}
 function renderHistory(){
-  const el=$('#tab-history'); const ms=meters();
-  const list=[...state.readings].reverse();
+  const el=$('#tab-history'); const ms=meters(); const mode=state.histMode;
+  const autos=state.readings.filter(isAuto); const lastAuto=autos[autos.length-1];
+  let body='';
+  if(mode==='all'){
+    const list=[...state.readings].reverse(); const rest=list.length-state.histLimit;
+    body=list.slice(0,state.histLimit).map(r=>histRow(r,ms)).join('')
+      + (rest>0?`<button class="btn sm" id="hist-more" style="margin-top:10px">Weitere ${fmt(Math.min(HIST_PAGE,rest),0)} von ${fmt(rest,0)} anzeigen</button>`:'');
+  } else {
+    const groups=new Map(), entries=[];
+    for(const r of state.readings){
+      if(!isAuto(r)){ entries.push({t:r.t, r}); continue; }
+      const p=periodOf(r.t, mode); let g=groups.get(p.key);
+      if(!g){ g={p, items:[]}; groups.set(p.key, g); entries.push(g); }
+      g.items.push(r); g.t=r.t;
+    }
+    entries.sort((a,b)=>b.t-a.t);
+    body=entries.map(e=>e.r?histRow(e.r,ms):groupRow(e,ms,mode)).join('');
+  }
+  const stale=lastAuto && Date.now()-lastAuto.t>3*3600000;
   el.innerHTML=`<div class="card stack">
-    <div class="row between"><h2>Alle Ablesungen</h2><a class="btn sm" href="api.php?p=export.xlsx" download>⬇ Excel exportieren</a></div>
+    <div class="row between"><h2>Ablesungen</h2><a class="btn sm" href="api.php?p=export.xlsx" download>⬇ Excel exportieren</a></div>
     <div class="tiny">Der Export enthält alle Zählerstände, den Verbrauch je Abschnitt mit Kosten, Ø Außentemperatur und Gradtagen, die Tagestemperaturen und die Zähler-Einstellungen.</div>
-    ${list.length?`<div class="hist">${list.map(r=>{
-      const vals=ms.filter(m=>typeof r.v?.[m.key]==='number').map(m=>`<span><span class="dot" style="background:${colorVar(m)}"></span>${esc(m.name)} <b>${fmt(r.v[m.key],m.decimals)}</b>${r.chg?.[m.key]?' <span class="chgflag">⟲ neu</span>':''}</span>`).join('');
-      const notes=r.n?Object.entries(r.n).map(([k,v])=>`${esc(meterByKey(k)?.name||k)}: ${esc(v)}`).join(' · '):'';
-      const thumbs=(r.ph||[]).map(e=>`<span class="thumbwrap"><img class="thumb" loading="lazy" src="${photoUrl(r.id,e.f)}" alt="Foto ${esc(meterByKey(e.m)?.name||'')}" data-view="${r.id}|${esc(e.f)}|${esc(e.m||'')}"><span class="cap">${esc((meterByKey(e.m)?.name||'').slice(0,10))}</span></span>`).join('');
-      return `<div class="hrow" data-edit="${r.id}"><div class="hd">${fmtDateTime(r.t)}<small>${r.src==='photo'?'per Foto':(r.src==='import'?'aus Excel':'von Hand')}</small></div><div class="vals">${vals||'<span class="tiny">keine Werte</span>'}</div>${notes?`<div class="note">${notes}</div>`:''}${thumbs?`<div class="thumbs">${thumbs}</div>`:''}</div>`;
-    }).join('')}</div>`:`<div class="empty">Noch keine Ablesungen.</div>`}
+    ${autos.length?`<div class="row between"><div class="chips" id="histchips">${HIST_MODES.map(([k,l])=>`<button class="chip" aria-pressed="${mode===k}" data-hist="${k}">${l}</button>`).join('')}</div></div>
+    <div class="tiny">${mode==='all'?'Jede Ablesung einzeln, auch die stündlichen vom Fronius.':`Die stündlichen Werte vom Fronius sind ${mode==='day'?'je Tag':mode==='week'?'je Woche':'je Monat'} zusammengefasst: Stand am Ende, Verbrauch im Zeitraum${mode==='day'?'':' und Ø pro Tag'}. Antippen klappt die Einzelwerte auf. Eigene Ablesungen stehen immer einzeln da.`}
+      Zuletzt vom Fronius: ${fmtDateTime(lastAuto.t)}${stale?' – <b style="color:var(--warn-text)">seit über drei Stunden nichts Neues, NAS prüfen</b>':''}.</div>`:''}
+    ${state.readings.length?`<div class="hist">${body}</div>`:`<div class="empty">Noch keine Ablesungen.</div>`}
   </div>`;
+  $$('[data-hist]',el).forEach(b=>b.addEventListener('click',()=>{ state.histMode=b.dataset.hist; state.histLimit=HIST_PAGE; renderHistory(); }));
+  $('#hist-more',el)?.addEventListener('click',()=>{ state.histLimit+=HIST_PAGE; renderHistory(); });
+  $$('[data-group]',el).forEach(r=>r.addEventListener('click',()=>{ const k=r.dataset.group; state.histOpen.has(k)?state.histOpen.delete(k):state.histOpen.add(k); renderHistory(); }));
   if(canEdit()) $$('[data-edit]',el).forEach(r=>r.addEventListener('click',e=>{ if(e.target.closest('[data-view]')) return; openEdit(r.dataset.edit); }));
-  else $$('.hrow',el).forEach(r=>r.style.cursor='default');
+  else $$('.hrow:not(.hgroup)',el).forEach(r=>r.style.cursor='default');
   $$('[data-view]',el).forEach(i=>i.addEventListener('click',e=>{ e.stopPropagation(); const [id,f,m]=i.dataset.view.split('|'); openPhoto(id,f,m); }));
 }
 function photoUrl(id, file){ return `api.php?p=photo&id=${encodeURIComponent(id)}&f=${encodeURIComponent(file)}`; }

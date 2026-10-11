@@ -1,0 +1,15 @@
+# Einstellungen für fronius-push.sh. Als  fronius-push.conf  neben das Skript legen.
+# fronius-push.conf enthält den Token und gehört nicht ins Git.
+
+# Wechselrichter im Heimnetz, SolarAPI muss dort eingeschaltet sein
+FRONIUS=http://192.168.0.10
+
+# Adresse der Zählerbuch-Installation
+SITE_URL=https://deine-domain.example
+
+# derselbe Wert wie 'push_token' in config.php auf dem Server
+PUSH_TOKEN=
+
+# optional: Zwischenspeicher und höchstens so viele Stunden je Sendung
+#SPOOL=/volume1/scripts/zaehlerbuch/spool
+#MAX_BATCH=200

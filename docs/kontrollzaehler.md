@@ -20,14 +20,31 @@ einmal für die Einspeisung. Der Sinn ist die Kontrolle, ob beide gleich laufen.
   ausschließlich den Zähler des Versorgers. Kontrollzähler erscheinen dort nicht.
   In der Oberfläche liefert `mainMeters()` die Liste ohne sie.
 * **Beim Erfassen wird sofort verglichen.** Stehen beide Werte im Formular, prüft
-  `crossCheck()` den Verbrauch seit der letzten Ablesung, in der **beide** Zähler stehen.
-  Nur dann sind die Differenzen vergleichbar.
+  `crossCheck()` den Verbrauch seit der letzten Ablesung des Hauptzählers, zu der es auch
+  einen Stand des Kontrollzählers gibt.
 * **In der Auswertung** gibt es die Karte „Zählerabgleich“ mit den letzten acht Abschnitten.
 * **Im Excel-Export** gibt es das gleichnamige Blatt mit allen Abschnitten.
 
 Verglichen wird immer der Verbrauch zwischen zwei Ablesungen, nie der absolute Stand: Die
 Zähler haben unterschiedliche Anfangswerte. Um einen Zählerwechsel herum wird der
 betroffene Abschnitt übersprungen.
+
+## Abschnitte und Stundenwerte
+
+Ein Abschnitt reicht von einer Ablesung des **Hauptzählers** bis zur nächsten. Den Stand
+des Kontrollzählers zu diesen Zeitpunkten liefert
+
+* dieselbe Ablesung, wenn dort beide Werte stehen, so wie früher bei jedem Foto, oder
+* die Stundenwerte vom NAS ([fronius-nas.md](fronius-nas.md)): linear zwischen dem Wert
+  davor und danach, aber nur, wenn **beide höchstens drei Stunden** entfernt sind und
+  dazwischen kein Zählerwechsel liegt.
+
+Bei einer Stunde Abstand liegt der Fehler der Interpolation deutlich unter der Toleranz.
+Zwischen alten, seltenen Handablesungen wird dagegen nie interpoliert, die Grenze von drei
+Stunden verhindert das. `frv` und `fre` müssen deshalb nicht mehr von Hand abgelesen werden.
+
+Umgesetzt in `nearAt()` und `controlSeries()` in `index.html` und gleichlautend in
+`zb_near_at()` und `zb_control_rows()` in `lib.php`. Beide müssen gleich rechnen.
 
 ## Warum es eine Toleranz je Tag gibt
 

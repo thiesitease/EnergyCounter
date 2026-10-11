@@ -21,3 +21,7 @@ php/config.php
 Thumbs.db
 .DS_Store
 *.tmp
+
+# NAS: Token und Zwischenspeicher von fronius-push.sh
+nas/fronius-push.conf
+nas/spool/

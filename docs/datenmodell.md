@@ -27,10 +27,16 @@ Eine Liste, aufsteigend nach Zeit sortiert. Ein Eintrag:
 | `n` | Notizen je Zähler |
 | `chg` | Zählerwechsel: Der neue Zähler beginnt mit diesem Stand |
 | `ph` | archivierte Fotos, `f` Dateiname, `m` zugehöriger Zähler |
-| `src` | `photo`, `manual` oder `import` |
+| `src` | `photo`, `manual`, `import` oder `fronius` (stündlich vom NAS, siehe [fronius-nas.md](fronius-nas.md)) |
 
 Nicht abgelesene Zähler fehlen einfach. Es ist ausdrücklich erlaubt, bei einer Ablesung
 nur einen einzigen Zähler einzutragen.
+
+Ablesungen vom Fronius haben die ID `fronius-JJJJMMTTHH` (Stunde in UTC) und nur `frv`
+und `fre`. Es sind rund 8 760 im Jahr. Sie gehen in alle Berechnungen ein, im Verlauf
+werden sie aber je Tag, Woche oder Monat zusammengefasst. Geschrieben wird
+`readings.json` immer über `zb_update_readings()` unter einer Dateisperre
+(`readings.lock`), damit sich NAS und Browser nicht gegenseitig überschreiben.
 
 ## `config.json` – Zähler, Preise, Standort
 

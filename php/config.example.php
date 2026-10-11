@@ -28,6 +28,15 @@ return [
     // wichtig, weil PHP auf Webhosting-Paketen ein Zeitlimit pro Aufruf hat.
     'effort' => 'low',
 
+    // Token für das NAS, das stündlich die Zählerstände des Fronius-Wechselrichters
+    // schickt (api.php?p=fronius-push). Er erlaubt nur diese eine Aktion. Leer = aus.
+    // Erzeugen und eintragen mit set-push-token.ps1, siehe docs/fronius-nas.md.
+    'push_token' => '',
+
+    // Optional: welches Register des Fronius Smart Meter in welchen Zähler geht.
+    // Standard: 'frv' => 'EnergyReal_WAC_Sum_Consumed', 'fre' => 'EnergyReal_WAC_Sum_Produced'
+    // 'fronius_map' => ['frv' => 'EnergyReal_WAC_Sum_Consumed', 'fre' => 'EnergyReal_WAC_Sum_Produced'],
+
     // Datenverzeichnis. Standard ist der Unterordner data/ neben dieser Datei.
     // Sicherer ist ein Ordner ausserhalb des Webverzeichnisses, z. B.:
     // 'data_dir' => dirname(__DIR__) . '/zb-daten',
