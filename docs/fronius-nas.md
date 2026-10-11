@@ -106,3 +106,52 @@ Probelauf ohne Senden: `DRY_RUN=1 sh fronius-push.sh`
    `health` zeigt `fronius_last`.
 
 Der Verlauf warnt, wenn seit über drei Stunden kein Wert vom Fronius gekommen ist.
+
+## Detaildaten alle 30 Sekunden
+
+Für spätere Auswertungen, etwa Tagesprofile, Eigenverbrauch, Lastspitzen oder einzelne
+Phasen, legt `nas/fronius-detail.py` auf dem NAS alle 30 Sekunden eine Messung ab. Diese
+Daten bleiben auf dem NAS, die Website bekommt sie nicht.
+
+* Der Aufgabenplaner startet höchstens minütlich. Das Skript misst deshalb zweimal je Lauf,
+  sofort und 30 Sekunden später. Eine Sperrdatei verhindert, dass sich zwei Läufe
+  überlappen, falls eine Abfrage hängt.
+* Je Messung werden `GetPowerFlowRealtimeData`, `GetMeterRealtimeData` und
+  `GetInverterRealtimeData` (CommonInverterData) abgefragt. Fällt eine davon aus, bleiben
+  ihre Spalten leer. Nachts ist das beim Wechselrichter normal.
+* Python 3.7 aus dem DSM, nur Standardbibliothek. Es liest dieselbe `fronius-push.conf`
+  (`FRONIUS`, optional `DETAIL_DIR`).
+* Probe ohne Schreiben: `python3 fronius-detail.py --einmal`
+
+Ablage: eine CSV-Datei pro Tag, `detail/JJJJ/MM/JJJJ-MM-TT.csv`. Trennzeichen ist das Komma,
+Dezimaltrenner der Punkt, Kodierung UTF-8. In Excel über *Daten → Aus Text/CSV* öffnen.
+Rund 2 880 Zeilen und etwa 500 KB am Tag, also knapp 200 MB im Jahr.
+
+| Spalte | Bedeutung |
+|---|---|
+| `zeit`, `unix` | Ortszeit des NAS (ISO) und Sekunden seit 1970 |
+| `netz_w` | Leistung am Netzanschluss, **positiv = Bezug**, negativ = Einspeisung |
+| `pv_w` | PV-Leistung |
+| `haus_w` | Verbrauch des Hauses (= Netz + PV) |
+| `bezug_wh`, `einspeisung_wh` | Zählerstände des Smart Meter in Wh |
+| `pv_gesamt_wh` | Gesamtertrag des Wechselrichters in Wh |
+| `l1_w` … `l3_a` | Wirkleistung, Spannung und Strom je Phase am Netzanschluss |
+| `blind_var`, `frequenz_hz` | Blindleistung gesamt, Netzfrequenz |
+| `wr_ac_w` | AC-Leistung des Wechselrichters |
+| `pv1_v`, `pv1_a`, `pv2_v`, `pv2_a` | Spannung und Strom der beiden PV-Strings (MPP-Tracker) |
+| `wr_status` | Zustand des Wechselrichters, z. B. `Running` |
+
+Energie für einen Zeitraum nimmt man am besten aus den Zählerständen (Differenz), nicht
+durch Aufsummieren der Leistungen: Fehlt einmal eine Messung, stimmt die Differenz trotzdem.
+
+### Einrichten auf der Synology
+
+`fronius-detail.py` neben `fronius-push.sh` legen. Dann eine zweite geplante Aufgabe
+„Zählerbuch Fronius Detail“ anlegen: Benutzer wie oben, täglich von 00:00 bis 23:59,
+Häufigkeit **jede Minute**, als Script:
+
+```
+python3 /volume1/scripts/zaehlerbuch/fronius-detail.py 2>> /volume1/scripts/zaehlerbuch/detail-fehler.log
+```
+
+`detail-fehler.log` bleibt leer, solange alles läuft.

@@ -25,3 +25,5 @@ Thumbs.db
 # NAS: Token und Zwischenspeicher von fronius-push.sh
 nas/fronius-push.conf
 nas/spool/
+nas/detail/
+nas/detail-fehler.log

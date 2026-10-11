@@ -48,13 +48,14 @@ weder Kontrollzähler noch Fotoarchiv, EXIF-Zeit, Lesemodus oder Fronius-Push.
 | `set-readonly-password.ps1` / `.sh` | Nur das Lesepasswort ändern |
 | `set-push-token.ps1` | Token für das NAS erzeugen, auf dem Server eintragen, `nas/fronius-push.conf` schreiben |
 | `nas/fronius-push.sh` | Läuft stündlich auf der Synology, schickt die Fronius-Zählerstände an `api.php?p=fronius-push` |
+| `nas/fronius-detail.py` | Läuft minütlich auf der Synology, legt alle 30 Sekunden eine Messung als CSV auf dem NAS ab |
 
 ## Weiterführende Notizen
 
 * [docs/betrieb.md](docs/betrieb.md) – Hosting-Regeln, Grenzwerte, Installation, Sicherung
 * [docs/datenmodell.md](docs/datenmodell.md) – Format der Ablesungen, Zählerwechsel, Auswertungslogik
 * [docs/kontrollzaehler.md](docs/kontrollzaehler.md) – Fronius parallel zum Zähler der Stadtwerke
-* [docs/fronius-nas.md](docs/fronius-nas.md) – Stündliche Fronius-Werte über das NAS, Push-Token, Synology-Aufgabe
+* [docs/fronius-nas.md](docs/fronius-nas.md) – Stündliche Fronius-Werte über das NAS, Push-Token, Detaildaten alle 30 s, Synology-Aufgaben
 * [docs/fotos.md](docs/fotos.md) – Warteschlange, Plausibilität, Archiv, Aufnahmezeit
 * [docs/rollen.md](docs/rollen.md) – Zwei Passwörter, Lesemodus
 * [docs/entwicklung.md](docs/entwicklung.md) – Lokal testen, Stolpersteine
@@ -62,6 +63,7 @@ weder Kontrollzähler noch Fotoarchiv, EXIF-Zeit, Lesemodus oder Fronius-Push.
 ## Umgebung des Entwicklungsrechners
 
 Windows 11 mit PowerShell. Kein Node, kein System-PHP, kein Docker. Vorhanden sind
-`git`, `ssh`, `sftp`, `curl`, `python`. Git Bash liegt unter
+`git`, `ssh`, `sftp`, `curl`. `python` ist nur der Store-Platzhalter und läuft nicht;
+Python-Skripte für das NAS dort testen. Git Bash liegt unter
 `C:\Program Files\Git\bin\bash.exe`, steht aber nicht im PATH. Skripte für den Benutzer
 deshalb als PowerShell anbieten oder mit dem vollen Pfad zu `bash.exe` aufrufen.
